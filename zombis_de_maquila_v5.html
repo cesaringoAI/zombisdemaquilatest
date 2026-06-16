@@ -1,0 +1,4607 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>ZOMBIS DE MAQUILA / SALTILLO / 2026</title>
+<meta name="description" content="Saltillo aprendió a producirlo todo, menos futuro. Una visualización de datos sobre el monocultivo industrial, la jornada fantasma y el derecho político al descanso.">
+<style>
+  /* ============================================
+     ZOMBIS DE MAQUILA — VISUAL SYSTEM v2
+     Punk industrial / brutalismo editorial
+     ============================================ */
+
+  @import url('https://fonts.googleapis.com/css2?family=VT323&family=Anton&family=JetBrains+Mono:wght@400;700&family=Archivo+Black&display=swap');
+
+  :root {
+    --ink: #0d0d0d;
+    --paper: #ebe5d6;
+    --blood: #c8201c;
+    --blood-hot: #ff2419;
+    --bone: #d8d2c2;
+    --rust: #8a3a1a;
+    --warn: #ff6600;
+    --warn-hot: #ff8a3d;
+    --shadow: #1a1a1a;
+    --mute: #5a5446;
+
+    --font-display: 'Anton', 'Oswald', sans-serif;
+    --font-black: 'Archivo Black', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+    --font-term: 'VT323', monospace;
+
+    --container: 1400px;
+  }
+
+  *, *::before, *::after {
+    margin: 0; padding: 0;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background: var(--ink);
+  }
+
+  body {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--font-mono);
+    overflow-x: hidden;
+    line-height: 1.5;
+    cursor: none;
+  }
+
+  /* === GLOBAL TEXTURE / GRAIN === */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.05 0 0 0 0 0.05 0 0 0 0 0.05 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.5;
+    mix-blend-mode: overlay;
+  }
+
+  /* CRT scanlines */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg,
+      transparent, transparent 3px,
+      rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px);
+    pointer-events: none;
+    z-index: 9997;
+  }
+
+  /* === CUSTOM CURSOR === */
+  .cursor {
+    position: fixed;
+    width: 16px;
+    height: 16px;
+    background: var(--blood-hot);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 99999;
+    mix-blend-mode: difference;
+    transition: width 0.2s, height 0.2s, background 0.2s;
+    transform: translate(-50%, -50%);
+    will-change: transform;
+  }
+  .cursor.expand {
+    width: 60px;
+    height: 60px;
+    background: var(--paper);
+  }
+  .cursor-trail {
+    position: fixed;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--blood);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 99998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+  }
+
+  @media (hover: none), (max-width: 768px) {
+    body { cursor: auto; }
+    .cursor, .cursor-trail { display: none; }
+  }
+
+  /* ===========================
+     TOP MARQUEE
+     =========================== */
+  .marquee {
+    background: var(--blood);
+    color: var(--ink);
+    padding: 0.6rem 0;
+    overflow: hidden;
+    border-bottom: 1px solid var(--ink);
+    position: relative;
+    z-index: 10;
+  }
+  .marquee-track {
+    display: flex;
+    gap: 4rem;
+    animation: scroll-x 60s linear infinite;
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .marquee-track span::before {
+    content: '◆';
+    margin-right: 1rem;
+    color: var(--ink);
+    opacity: 0.6;
+  }
+  @keyframes scroll-x {
+    to { transform: translateX(-50%); }
+  }
+
+  .marquee.reverse .marquee-track { animation-direction: reverse; animation-duration: 80s; }
+  .marquee.slow .marquee-track { animation-duration: 100s; }
+
+  /* Top reading progress (thin line above marquee) */
+  .progress-line {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: var(--blood);
+    z-index: 200;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  /* ===========================
+     HERO
+     =========================== */
+  .hero {
+    min-height: 100vh;
+    position: relative;
+    padding: 4rem 2rem 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    border-bottom: 1px solid var(--shadow);
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,32,28,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,32,28,0.06) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+
+  .hero-walkers {
+    position: absolute;
+    bottom: 8%;
+    left: 0;
+    right: 0;
+    height: 140px;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+  }
+  .walker {
+    position: absolute;
+    bottom: 0;
+    width: 12px;
+    height: 32px;
+    background: var(--blood);
+    opacity: 0.4;
+    animation: walk var(--dur, 18s) linear infinite;
+  }
+  .walker::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 2px;
+    width: 8px;
+    height: 8px;
+    background: var(--blood);
+    border-radius: 50%;
+  }
+  @keyframes walk {
+    from { transform: translateX(-50px); }
+    to { transform: translateX(calc(100vw + 50px)); }
+  }
+
+  .hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--mute);
+    text-transform: uppercase;
+    position: relative;
+    z-index: 2;
+  }
+  .hero-top-right { text-align: right; }
+  .hero-top span.live {
+    color: var(--blood);
+    display: inline-block;
+    margin-right: 0.5rem;
+  }
+  .hero-top span.live::before {
+    content: '●';
+    margin-right: 0.3rem;
+    animation: pulse-dot 1.5s infinite;
+  }
+  @keyframes pulse-dot { 50% { opacity: 0.3; } }
+
+  .hero-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+    padding: 3rem 0;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--blood);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .hero-eyebrow::before, .hero-eyebrow::after {
+    content: '';
+    flex: 0 0 40px;
+    height: 1px;
+    background: var(--blood);
+  }
+  .hero-eyebrow::after { flex: 1; }
+
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(58px, 14vw, 240px);
+    line-height: 0.82;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    color: var(--paper);
+  }
+  .hero h1 .red { color: var(--blood); }
+  .hero h1 .outline {
+    color: transparent;
+    -webkit-text-stroke: 2px var(--paper);
+  }
+  .hero h1 .slash {
+    display: inline-block;
+    color: var(--blood);
+    transform: skewX(-15deg);
+    margin: 0 0.05em;
+  }
+
+  .hero-tagline {
+    margin-top: 2rem;
+    max-width: 580px;
+    font-family: var(--font-mono);
+    font-size: clamp(13px, 1.6vw, 16px);
+    line-height: 1.7;
+    color: #b8b2a3;
+  }
+  .hero-tagline strong { color: var(--paper); }
+
+  .hero-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    position: relative;
+    z-index: 2;
+    flex-wrap: wrap;
+    gap: 2rem;
+  }
+  .hero-credit {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mute);
+    max-width: 700px;
+    line-height: 1.7;
+  }
+  .hero-credit a {
+    color: var(--paper);
+    text-decoration: none;
+    border-bottom: 1px solid var(--blood);
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .hero-credit a:hover {
+    color: var(--blood-hot);
+    border-bottom-color: var(--blood-hot);
+  }
+  .hero-credit strong { font-weight: 400; color: inherit; }
+
+  .scroll-cue {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--blood);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    animation: pulse-dot 2s infinite;
+  }
+
+  /* ===========================
+     SECTION SYSTEM
+     =========================== */
+  section {
+    padding: 8rem 2rem;
+    position: relative;
+    border-bottom: 1px solid var(--shadow);
+  }
+  section.tight { padding: 4rem 2rem; }
+
+  .container {
+    max-width: var(--container);
+    margin: 0 auto;
+  }
+
+  .section-marker {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--mute);
+    text-transform: uppercase;
+  }
+  .section-marker .num {
+    font-family: var(--font-display);
+    font-size: 56px;
+    color: var(--blood);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .section-marker .line {
+    flex: 1;
+    height: 1px;
+    background: var(--shadow);
+  }
+  .section-marker .name {
+    color: var(--paper);
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: clamp(42px, 7vw, 110px);
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: var(--paper);
+    margin-bottom: 3rem;
+    max-width: 1100px;
+  }
+  h2 .red { color: var(--blood); }
+  h2 .strike { text-decoration: line-through; text-decoration-color: var(--blood); text-decoration-thickness: 6px; }
+
+  h3 {
+    font-family: var(--font-display);
+    font-size: clamp(24px, 3vw, 36px);
+    line-height: 1;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  /* === ESSAY PROSE === */
+  .prose {
+    max-width: 720px;
+    font-family: var(--font-mono);
+    font-size: clamp(14px, 1.4vw, 17px);
+    line-height: 1.85;
+    color: #c5bfb0;
+  }
+  .prose p { margin-bottom: 1.5rem; }
+  .prose p:first-of-type::first-letter {
+    font-family: var(--font-display);
+    font-size: 5.5em;
+    float: left;
+    line-height: 0.8;
+    padding: 0.05em 0.15em 0 0;
+    color: var(--blood);
+  }
+  .prose strong { color: var(--paper); font-weight: 700; }
+  .prose em {
+    color: var(--warn);
+    font-style: normal;
+    font-weight: 600;
+  }
+  .prose .annotated {
+    border-bottom: 1px dashed var(--blood);
+    cursor: help;
+    position: relative;
+  }
+
+  /* === SLOT MACHINE COUNTERS (Terminal Industries style) === */
+  .slot-counter {
+    display: inline-flex;
+    height: 1em;
+    overflow: hidden;
+    line-height: 1;
+    vertical-align: top;
+  }
+  .slot-digit {
+    display: flex;
+    flex-direction: column;
+    transition: transform 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+  .slot-digit span {
+    display: block;
+    height: 1em;
+    line-height: 1;
+  }
+
+  /* ===========================
+     STAT GRID
+     =========================== */
+  .stat-deck {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1px;
+    background: var(--shadow);
+    margin: 4rem 0;
+  }
+  .stat-cell {
+    background: var(--ink);
+    padding: 2.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.4s;
+  }
+  .stat-cell:hover { background: #121212; }
+  .stat-cell.w-6 { grid-column: span 6; }
+  .stat-cell.w-4 { grid-column: span 4; }
+  .stat-cell.w-3 { grid-column: span 3; }
+  .stat-cell.w-12 { grid-column: span 12; }
+  .stat-cell.w-8 { grid-column: span 8; }
+
+  @media (max-width: 1000px) {
+    .stat-cell.w-3, .stat-cell.w-4 { grid-column: span 6; }
+    .stat-cell.w-8, .stat-cell.w-6 { grid-column: span 12; }
+  }
+  @media (max-width: 600px) {
+    .stat-cell { grid-column: span 12 !important; }
+  }
+
+  .stat-cell::before {
+    content: attr(data-num);
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--mute);
+  }
+
+  .stat-figure {
+    font-family: var(--font-display);
+    font-size: clamp(56px, 8vw, 120px);
+    line-height: 0.9;
+    color: var(--paper);
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.1em;
+  }
+  .stat-figure .unit {
+    font-size: 0.35em;
+    color: var(--blood);
+    font-family: var(--font-mono);
+    letter-spacing: 0.1em;
+  }
+  .stat-figure .sign {
+    color: var(--warn);
+    font-family: var(--font-display);
+  }
+
+  .stat-cell.blood { background: var(--blood); color: var(--ink); }
+  .stat-cell.blood .stat-figure { color: var(--ink); }
+  .stat-cell.blood .stat-figure .unit { color: var(--ink); opacity: 0.7; }
+  .stat-cell.blood .stat-desc { color: var(--ink); opacity: 0.85; }
+  .stat-cell.blood .stat-src { color: var(--ink); opacity: 0.5; }
+  .stat-cell.blood::before { color: rgba(0,0,0,0.5); }
+
+  .stat-cell.paper { background: var(--paper); color: var(--ink); }
+  .stat-cell.paper .stat-figure { color: var(--ink); }
+  .stat-cell.paper .stat-figure .unit { color: var(--blood); }
+  .stat-cell.paper .stat-desc { color: var(--ink); opacity: 0.7; }
+  .stat-cell.paper .stat-src { color: var(--ink); opacity: 0.4; }
+  .stat-cell.paper::before { color: var(--ink); opacity: 0.4; }
+
+  .stat-desc {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: #a89f8a;
+    max-width: 360px;
+  }
+  .stat-src {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--mute);
+    text-transform: uppercase;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #222;
+  }
+
+  /* ===========================
+     PULL QUOTE BAND
+     =========================== */
+  .quote-band {
+    background: var(--paper);
+    color: var(--ink);
+    padding: 7rem 2rem 6rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .quote-band blockquote {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 5vw, 72px);
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative;
+    padding: 0 1.5rem;
+  }
+  .quote-band blockquote::before {
+    content: '“';
+    position: absolute;
+    top: -5.5rem;
+    left: -1.5rem;
+    font-family: var(--font-black);
+    font-size: clamp(140px, 16vw, 240px);
+    color: var(--blood);
+    line-height: 1;
+    opacity: 0.95;
+    pointer-events: none;
+  }
+  .quote-band blockquote::after {
+    content: '”';
+    display: inline-block;
+    font-family: var(--font-black);
+    font-size: clamp(80px, 10vw, 160px);
+    color: var(--blood);
+    line-height: 0.2;
+    vertical-align: -0.4em;
+    margin-left: 0.1em;
+    transform: translateY(0.15em);
+  }
+  .quote-band blockquote .red { color: var(--blood); }
+  .quote-band cite {
+    display: block;
+    margin-top: 3rem;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    color: var(--ink);
+    font-style: normal;
+    text-transform: uppercase;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 1.5rem;
+  }
+  .quote-band cite strong {
+    color: var(--blood);
+    font-weight: 400;
+  }
+
+  /* ===========================
+     STICKY SCROLLYTELLING
+     =========================== */
+  .scrolly {
+    position: relative;
+  }
+  .scrolly-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .scrolly-grid { grid-template-columns: 1fr; gap: 2rem; }
+  }
+  .scrolly-sticky {
+    position: sticky;
+    top: 10vh;
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .scrolly-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 30vh;
+    padding: 20vh 0;
+  }
+  .scrolly-step {
+    padding: 2rem 2rem 2rem 3rem;
+    border-left: 2px solid var(--shadow);
+    opacity: 0.3;
+    transition: opacity 0.4s, border-color 0.4s;
+  }
+  .scrolly-step.active {
+    opacity: 1;
+    border-left-color: var(--blood);
+  }
+  .scrolly-step h4 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--paper);
+    margin-bottom: 1rem;
+  }
+  .scrolly-step p {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: #a89f8a;
+    line-height: 1.7;
+  }
+
+  .big-stat-display {
+    text-align: center;
+  }
+  .big-stat-display .figure {
+    font-family: var(--font-display);
+    font-size: clamp(80px, 18vw, 280px);
+    line-height: 0.85;
+    color: var(--blood);
+    letter-spacing: -0.04em;
+  }
+  .big-stat-display .label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--mute);
+    text-transform: uppercase;
+    margin-top: 1rem;
+  }
+
+  /* ===========================
+     BAR CHART
+     =========================== */
+  .chart {
+    margin: 3rem 0;
+  }
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--shadow);
+  }
+  .chart-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--paper);
+    text-transform: uppercase;
+  }
+  .chart-meta {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--mute);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 1.5rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  @media (max-width: 600px) {
+    .bar-row { grid-template-columns: 1fr; gap: 0.3rem; }
+  }
+  .bar-name {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: #a89f8a;
+    text-transform: uppercase;
+    text-align: right;
+  }
+  @media (max-width: 600px) {
+    .bar-name { text-align: left; }
+  }
+  .bar-track {
+    height: 32px;
+    background: rgba(255,255,255,0.03);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--shadow);
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--blood);
+    width: 0%;
+    transition: width 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 0.75rem;
+  }
+  .bar-fill .val {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: 0.1em;
+  }
+  .bar-fill.muted { background: var(--mute); }
+  .bar-fill.warn { background: var(--warn); }
+  .bar-fill.paper-bar { background: var(--paper); }
+
+  /* ===========================
+     THE ACT — Pause Counter (REFUSE button)
+     =========================== */
+  .refuse-section {
+    background:
+      linear-gradient(180deg, var(--ink) 0%, var(--shadow) 100%);
+    padding: 8rem 2rem;
+    text-align: center;
+    border-top: 3px solid var(--blood);
+    border-bottom: 3px solid var(--blood);
+    position: relative;
+    overflow: hidden;
+  }
+  .refuse-section::before {
+    content: 'PAUSA';
+    position: absolute;
+    top: 50%;
+    left: -5%;
+    transform: translateY(-50%) rotate(-12deg);
+    font-family: var(--font-display);
+    font-size: clamp(140px, 22vw, 380px);
+    color: rgba(200,32,28,0.05);
+    line-height: 0.8;
+    letter-spacing: -0.03em;
+    pointer-events: none;
+  }
+  .refuse-section::after {
+    content: 'PAUSA';
+    position: absolute;
+    top: 50%;
+    right: -5%;
+    transform: translateY(-50%) rotate(12deg);
+    font-family: var(--font-display);
+    font-size: clamp(140px, 22vw, 380px);
+    color: rgba(200,32,28,0.05);
+    line-height: 0.8;
+    letter-spacing: -0.03em;
+    pointer-events: none;
+  }
+
+  .refuse-inner {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .refuse-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--blood);
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+  }
+  .refuse-title {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 6vw, 84px);
+    line-height: 0.9;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    color: var(--paper);
+    margin-bottom: 2rem;
+  }
+  .refuse-title .red { color: var(--blood); }
+  .refuse-desc {
+    font-family: var(--font-mono);
+    font-size: clamp(14px, 1.6vw, 16px);
+    line-height: 1.8;
+    color: #a89f8a;
+    margin-bottom: 3rem;
+  }
+  .refuse-desc strong { color: var(--paper); }
+
+  .refuse-button {
+    display: inline-block;
+    background: transparent;
+    border: 3px solid var(--blood);
+    color: var(--paper);
+    font-family: var(--font-display);
+    font-size: clamp(20px, 2.5vw, 32px);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 1.5rem 3rem;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s;
+    overflow: hidden;
+    outline: none;
+  }
+  .refuse-button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--blood);
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: -1;
+  }
+  .refuse-button:hover::before { transform: translateY(0); }
+  .refuse-button:hover { color: var(--ink); border-color: var(--blood); }
+  .refuse-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .refuse-button-inner {
+    position: relative;
+    z-index: 1;
+  }
+
+  .refuse-counter {
+    margin-top: 4rem;
+    padding: 2rem;
+    border: 1px solid var(--shadow);
+    background: rgba(0,0,0,0.4);
+    display: inline-block;
+    min-width: 320px;
+  }
+  .refuse-counter-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--mute);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .refuse-counter-num {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 7vw, 88px);
+    line-height: 1;
+    color: var(--blood);
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .refuse-counter-sub {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--mute);
+    margin-top: 0.5rem;
+    text-transform: uppercase;
+  }
+
+  /* PAUSE OVERLAY MODAL */
+  .pause-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--ink);
+    z-index: 99000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s, visibility 0.5s;
+  }
+  .pause-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  .pause-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.05 0 0 0 0 0.05 0 0 0 0 0.05 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  .pause-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.5em;
+    color: var(--blood);
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 2;
+  }
+  .pause-message {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 6vw, 80px);
+    line-height: 1;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--paper);
+    letter-spacing: -0.02em;
+    max-width: 1000px;
+    position: relative;
+    z-index: 2;
+  }
+  .pause-message .red { color: var(--blood); }
+  .pause-time {
+    font-family: var(--font-term);
+    font-size: 80px;
+    color: var(--blood);
+    line-height: 1;
+    margin-top: 3rem;
+    letter-spacing: 0.05em;
+    position: relative;
+    z-index: 2;
+  }
+  .pause-foot {
+    margin-top: 3rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--mute);
+    text-transform: uppercase;
+    text-align: center;
+    max-width: 600px;
+    position: relative;
+    z-index: 2;
+    line-height: 1.8;
+  }
+  .pause-skip {
+    margin-top: 2rem;
+    background: transparent;
+    border: 1px solid var(--mute);
+    color: var(--mute);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    transition: color 0.3s, border-color 0.3s;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s 5s, color 0.3s, border-color 0.3s;
+  }
+  .pause-overlay.active .pause-skip {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .pause-skip:hover { color: var(--blood); border-color: var(--blood); }
+
+  /* ===========================
+     MANIFESTO
+     =========================== */
+  .manifesto {
+    background: var(--blood);
+    color: var(--ink);
+    padding: 8rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .manifesto::before {
+    content: 'ZOMBI';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-display);
+    font-size: clamp(200px, 35vw, 600px);
+    color: rgba(0,0,0,0.06);
+    line-height: 0.8;
+    letter-spacing: -0.04em;
+    pointer-events: none;
+    z-index: 0;
+    white-space: nowrap;
+  }
+  .manifesto .container { position: relative; z-index: 1; }
+  .manifesto h2 { color: var(--ink); }
+  .manifesto h2 .strike { text-decoration-color: var(--ink); }
+
+  .manifesto-list {
+    list-style: none;
+    counter-reset: zombi;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .manifesto-list li {
+    counter-increment: zombi;
+    font-family: var(--font-mono);
+    font-size: clamp(15px, 1.8vw, 20px);
+    line-height: 1.5;
+    color: rgba(0,0,0,0.9);
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+    padding: 1.25rem 0 1.25rem 4rem;
+    position: relative;
+  }
+  .manifesto-list li::before {
+    content: counter(zombi, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 1.4rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--ink);
+    opacity: 0.6;
+  }
+  .manifesto-list li strong { font-weight: 700; color: var(--ink); }
+
+  /* ===========================
+     TIMELINE
+     =========================== */
+  .timeline {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 0;
+  }
+  @media (max-width: 800px) {
+    .timeline { grid-template-columns: 80px 1fr; }
+  }
+  .timeline-year {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 56px);
+    color: var(--blood);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    padding-top: 0.2rem;
+    position: sticky;
+    top: 4rem;
+  }
+  .timeline-content {
+    padding: 1.5rem 0 4rem 2rem;
+    border-left: 2px solid var(--shadow);
+    position: relative;
+  }
+  .timeline-content::before {
+    content: '';
+    position: absolute;
+    left: -7px;
+    top: 1.8rem;
+    width: 12px;
+    height: 12px;
+    background: var(--blood);
+    transform: rotate(45deg);
+  }
+  .timeline-headline {
+    font-family: var(--font-display);
+    font-size: clamp(20px, 2.2vw, 28px);
+    line-height: 1.05;
+    text-transform: uppercase;
+    color: var(--paper);
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+  }
+  .timeline-detail {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: #a89f8a;
+    max-width: 700px;
+  }
+
+  /* ===========================
+     DEMAND GRID
+     =========================== */
+  .demand-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1px;
+    background: var(--shadow);
+    margin: 3rem 0;
+  }
+  .demand-card {
+    background: var(--ink);
+    padding: 2rem;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    color: #a89f8a;
+    transition: background 0.3s;
+    position: relative;
+  }
+  .demand-card:hover { background: #121212; }
+  .demand-card .demand-tag {
+    font-family: var(--font-display);
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    color: var(--warn);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+  .demand-card .demand-num {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--mute);
+    letter-spacing: 0.2em;
+  }
+
+  /* ===========================
+     TICKER (different)
+     =========================== */
+  .ticker-bar {
+    background: var(--ink);
+    color: var(--mute);
+    padding: 1rem 0;
+    overflow: hidden;
+    border-top: 1px solid var(--shadow);
+    border-bottom: 1px solid var(--shadow);
+  }
+  .ticker-track {
+    display: flex;
+    gap: 3rem;
+    white-space: nowrap;
+    animation: scroll-x 90s linear infinite;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .ticker-track strong { color: var(--blood); }
+
+  /* ===========================
+     FOOTER
+     =========================== */
+  footer {
+    padding: 6rem 2rem 3rem;
+    background: var(--ink);
+    border-top: 3px solid var(--blood);
+    position: relative;
+  }
+  footer .container {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 3rem;
+  }
+  @media (max-width: 768px) {
+    footer .container { grid-template-columns: 1fr; }
+  }
+  .foot-brand {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 6vw, 80px);
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+  .foot-brand .small {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--mute);
+    display: block;
+    margin-top: 1rem;
+    text-transform: uppercase;
+  }
+  .foot-col h5 {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--warn);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .foot-col p, .foot-col li {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: #c5bca7;
+    line-height: 1.8;
+    list-style: none;
+  }
+  .foot-credit p { margin-bottom: 1rem; }
+  .foot-credit a {
+    color: var(--paper);
+    text-decoration: none;
+    border-bottom: 1px solid var(--warn);
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .foot-credit a:hover {
+    color: var(--warn-hot);
+    border-bottom-color: var(--warn-hot);
+  }
+  .foot-credit .foot-aux {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--mute);
+    text-transform: uppercase;
+    margin-top: 1.5rem;
+  }
+  .foot-credit .foot-aux a {
+    color: var(--warn);
+    border-bottom: 1px dotted var(--warn);
+  }
+  .foot-bottom {
+    max-width: var(--container);
+    margin: 4rem auto 0;
+    padding-top: 2rem;
+    border-top: 1px solid var(--shadow);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--mute);
+    text-transform: uppercase;
+  }
+
+  /* ===========================
+     REVEAL ANIMATION
+     =========================== */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .reveal { opacity: 1; transform: none; }
+  }
+
+  /* === ASCII / DECORATIVE === */
+  .ascii-divider {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--mute);
+    text-align: center;
+    margin: 4rem 0;
+    letter-spacing: 0.2em;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* ===========================
+     RED FLAGS TEST
+     =========================== */
+  .rftest {
+    background: var(--paper);
+    color: var(--ink);
+    padding: 8rem 2rem;
+    position: relative;
+    overflow: hidden;
+    border-top: 3px solid var(--blood);
+  }
+  .rftest::before {
+    content: '⚑';
+    position: absolute;
+    top: 2rem;
+    right: 5%;
+    font-size: clamp(180px, 28vw, 420px);
+    color: rgba(200,32,28,0.08);
+    line-height: 0.8;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .rftest .container { position: relative; z-index: 1; }
+  .rftest .section-marker { color: var(--mute); }
+  .rftest .section-marker .num { color: var(--blood); }
+  .rftest .section-marker .line { background: rgba(0,0,0,0.15); }
+  .rftest .section-marker .name { color: var(--ink); }
+
+  .rftest h2 { color: var(--ink); }
+  .rftest h2 .red { color: var(--blood); }
+  .rftest h2 .strike { text-decoration-color: var(--blood); }
+
+  .rftest-logline {
+    font-family: var(--font-mono);
+    font-size: clamp(14px, 1.6vw, 17px);
+    line-height: 1.75;
+    color: var(--mute);
+    max-width: 720px;
+    margin-bottom: 1.5rem;
+  }
+  .rftest-logline strong { color: var(--ink); }
+
+  .rftest-intro {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 3vw, 36px);
+    line-height: 1.05;
+    text-transform: uppercase;
+    color: var(--blood);
+    letter-spacing: -0.01em;
+    margin-bottom: 3rem;
+    max-width: 900px;
+  }
+
+  /* Live counter card */
+  .rfgauge {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 2.5rem 2rem;
+    margin-bottom: 4rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 2rem;
+    border: 3px solid var(--ink);
+    position: relative;
+    overflow: hidden;
+  }
+  .rfgauge-meter {
+    position: relative;
+  }
+  .rfgauge-meter-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--mute);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .rfgauge-meter-bar {
+    height: 32px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--shadow);
+    overflow: hidden;
+    position: relative;
+  }
+  .rfgauge-meter-fill {
+    height: 100%;
+    background: var(--blood);
+    width: 0%;
+    transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1), background 0.4s;
+    position: relative;
+  }
+  .rfgauge-meter-ticks {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    pointer-events: none;
+  }
+  .rfgauge-meter-ticks span {
+    flex: 1;
+    border-right: 1px solid rgba(255,255,255,0.06);
+  }
+  .rfgauge-meter-ticks span:last-child { border-right: 0; }
+  .rfgauge-meter-foot {
+    margin-top: 0.6rem;
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--mute);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .rfgauge-num {
+    text-align: right;
+    line-height: 1;
+  }
+  .rfgauge-num .pct {
+    font-family: var(--font-display);
+    font-size: clamp(64px, 9vw, 120px);
+    color: var(--paper);
+    letter-spacing: -0.03em;
+    line-height: 0.85;
+    transition: color 0.4s;
+    font-variant-numeric: tabular-nums;
+  }
+  .rfgauge-num .lbl {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--mute);
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+    display: block;
+  }
+
+  @media (max-width: 700px) {
+    .rfgauge { grid-template-columns: 1fr; text-align: left; }
+    .rfgauge-num { text-align: left; }
+  }
+
+  /* Flag grid */
+  .rflag-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0;
+    border-top: 1px solid var(--ink);
+    border-left: 1px solid var(--ink);
+  }
+  .rflag {
+    border-right: 1px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    cursor: pointer;
+    background: var(--paper);
+    transition: background 0.3s, color 0.3s;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--ink);
+    user-select: none;
+    position: relative;
+    min-height: 130px;
+  }
+  .rflag:hover {
+    background: var(--bone);
+  }
+  .rflag-num {
+    flex-shrink: 0;
+    font-family: var(--font-display);
+    font-size: 24px;
+    line-height: 1;
+    color: var(--blood);
+    width: 28px;
+    letter-spacing: -0.02em;
+  }
+  .rflag-box {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--ink);
+    margin-top: 2px;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .rflag-box::after {
+    content: '✕';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-family: var(--font-mono);
+    font-size: 16px;
+    color: var(--paper);
+    font-weight: 700;
+    line-height: 1;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .rflag.on {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .rflag.on .rflag-num { color: var(--blood); }
+  .rflag.on .rflag-box {
+    background: var(--blood);
+    border-color: var(--blood);
+  }
+  .rflag.on .rflag-box::after { transform: translate(-50%, -50%) scale(1); }
+  .rflag-text { flex: 1; }
+  .rflag-text strong {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-family: var(--font-display);
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: inherit;
+  }
+
+  /* RESULT BLOCK */
+  .rfresult {
+    margin-top: 4rem;
+    padding: 4rem 2rem;
+    background: var(--ink);
+    color: var(--paper);
+    text-align: center;
+    border: 3px solid var(--blood);
+    position: relative;
+    overflow: hidden;
+  }
+  .rfresult::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='nn'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.05 0 0 0 0 0.05 0 0 0 0 0.05 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23nn)'/%3E%3C/svg%3E");
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  .rfresult > * { position: relative; z-index: 1; }
+  .rfresult-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    color: var(--blood);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  .rfresult-pct {
+    font-family: var(--font-display);
+    font-size: clamp(80px, 16vw, 220px);
+    line-height: 0.85;
+    color: var(--blood);
+    letter-spacing: -0.04em;
+    margin-bottom: 1rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .rfresult-tier {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 3vw, 40px);
+    text-transform: uppercase;
+    color: var(--paper);
+    letter-spacing: -0.01em;
+    line-height: 1;
+    margin-bottom: 2rem;
+  }
+  .rfresult-diagnosis {
+    font-family: var(--font-mono);
+    font-size: clamp(13px, 1.5vw, 16px);
+    line-height: 1.8;
+    color: #c5bfb0;
+    max-width: 640px;
+    margin: 0 auto 3rem;
+  }
+  .rfresult-diagnosis strong { color: var(--paper); }
+
+  .rfresult-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .rfresult-btn {
+    background: transparent;
+    border: 2px solid var(--paper);
+    color: var(--paper);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    padding: 1rem 1.75rem;
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+  }
+  .rfresult-btn:hover {
+    background: var(--blood);
+    border-color: var(--blood);
+    color: var(--paper);
+  }
+  .rfresult-btn.ghost { border-color: var(--mute); color: var(--mute); }
+  .rfresult-btn.ghost:hover { background: transparent; border-color: var(--paper); color: var(--paper); }
+
+  .rfresult-share {
+    display: none;
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px dashed var(--mute);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: #c5bfb0;
+    line-height: 1.7;
+    text-align: left;
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+    white-space: pre-wrap;
+    cursor: text;
+  }
+  .rfresult-share.visible { display: block; }
+  .rfresult-share strong { color: var(--paper); }
+
+  .rfresult-copied {
+    display: inline-block;
+    margin-left: 1rem;
+    color: var(--blood);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .rfresult-copied.show { opacity: 1; }
+
+  /* ===========================
+     CRONOLOGÍA ANTI-ZOMBI
+     Línea de ensamble histórica
+     =========================== */
+  .azchron {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 8rem 0 6rem;
+    position: relative;
+    overflow: hidden;
+    border-top: 3px solid var(--blood);
+  }
+  .azchron::before {
+    content: '500';
+    position: absolute;
+    top: 4rem;
+    right: 2rem;
+    font-family: var(--font-display);
+    font-size: clamp(180px, 32vw, 520px);
+    color: rgba(200,32,28,0.04);
+    line-height: 0.8;
+    letter-spacing: -0.05em;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .azchron .container {
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .azchron-intro {
+    max-width: 800px;
+    margin-bottom: 3rem;
+  }
+  .azchron-intro .prose {
+    font-family: var(--font-mono);
+    font-size: clamp(14px, 1.4vw, 17px);
+    line-height: 1.85;
+    color: #c5bfb0;
+  }
+  .azchron-intro .prose strong { color: var(--paper); }
+  .azchron-intro .prose em { color: var(--blood); font-style: normal; }
+
+  /* Stat strip */
+  .azchron-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1px;
+    background: var(--shadow);
+    border: 1px solid var(--shadow);
+    margin-bottom: 3rem;
+  }
+  .azchron-stat {
+    background: var(--ink);
+    padding: 1.5rem 1.25rem;
+  }
+  .azchron-stat .n {
+    font-family: var(--font-display);
+    font-size: clamp(32px, 4vw, 48px);
+    line-height: 1;
+    color: var(--blood);
+    letter-spacing: -0.02em;
+  }
+  .azchron-stat .l {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--mute);
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+  }
+
+  /* Era filter chips */
+  .azchron-eras {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-bottom: 3rem;
+    border-top: 1px solid var(--shadow);
+    border-bottom: 1px solid var(--shadow);
+    padding: 1rem 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .azchron-eras::-webkit-scrollbar { display: none; }
+  .azchron-era {
+    background: transparent;
+    border: 1px solid var(--shadow);
+    color: var(--mute);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    margin-right: 0.4rem;
+    margin-bottom: 0.4rem;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .azchron-era:hover {
+    color: var(--paper);
+    border-color: var(--mute);
+  }
+  .azchron-era.active {
+    color: var(--ink);
+    background: var(--blood);
+    border-color: var(--blood);
+  }
+  .azchron-era .count {
+    font-family: var(--font-display);
+    font-size: 12px;
+    color: var(--blood);
+    line-height: 1;
+  }
+  .azchron-era.active .count { color: var(--ink); }
+
+  /* DESKTOP: sticky split layout */
+  .azchron-stage {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+
+  @media (max-width: 900px) {
+    .azchron-stage { grid-template-columns: 1fr; gap: 1.5rem; }
+  }
+
+  /* LEFT: orbital nav (sticky on desktop) */
+  .azchron-orbit {
+    position: sticky;
+    top: 6rem;
+    height: calc(100vh - 8rem);
+    border-left: 2px solid var(--shadow);
+    padding: 1rem 0 1rem 1.5rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--blood) transparent;
+  }
+  .azchron-orbit::-webkit-scrollbar { width: 4px; }
+  .azchron-orbit::-webkit-scrollbar-track { background: transparent; }
+  .azchron-orbit::-webkit-scrollbar-thumb { background: var(--shadow); }
+  .azchron-orbit::-webkit-scrollbar-thumb:hover { background: var(--blood); }
+
+  .azchron-orbit-head {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--blood);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  .azchron-orbit-head .total {
+    color: var(--paper);
+    font-family: var(--font-display);
+    font-size: 14px;
+    letter-spacing: -0.01em;
+  }
+
+  .azchron-node {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 0.75rem;
+    padding: 0.6rem 0.5rem 0.6rem 0;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.2s, border-color 0.2s;
+    position: relative;
+    text-align: left;
+    background: transparent;
+    width: 100%;
+    color: inherit;
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+  }
+  .azchron-node::before {
+    content: '';
+    position: absolute;
+    left: -1.65rem;
+    top: 1rem;
+    width: 8px;
+    height: 8px;
+    background: var(--shadow);
+    transform: rotate(45deg);
+    transition: background 0.3s, transform 0.3s;
+  }
+  .azchron-node:hover { background: rgba(255,255,255,0.02); }
+  .azchron-node:hover::before { background: var(--mute); }
+  .azchron-node.active {
+    background: rgba(200,32,28,0.06);
+  }
+  .azchron-node.active::before {
+    background: var(--blood);
+    transform: rotate(45deg) scale(1.4);
+  }
+  .azchron-node-num {
+    font-family: var(--font-display);
+    font-size: 16px;
+    color: var(--mute);
+    line-height: 1;
+    text-align: right;
+    letter-spacing: -0.01em;
+  }
+  .azchron-node.active .azchron-node-num { color: var(--blood); }
+  .azchron-node-info {
+    overflow: hidden;
+  }
+  .azchron-node-year {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--paper);
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+    margin-bottom: 0.15rem;
+  }
+  .azchron-node-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--mute);
+    line-height: 1.3;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .azchron-node.active .azchron-node-title { color: #c5bfb0; }
+
+  /* RIGHT: active card */
+  .azchron-card-wrap {
+    position: relative;
+    min-height: 60vh;
+  }
+  .azchron-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+    border: 1px solid var(--shadow);
+    border-left: 4px solid var(--blood);
+    padding: 2.5rem 2.5rem 2rem;
+    position: sticky;
+    top: 6rem;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .azchron-card.in { opacity: 1; transform: translateY(0); }
+
+  .azchron-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--shadow);
+    flex-wrap: wrap;
+  }
+  .azchron-card-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    color: var(--blood);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .azchron-card-eyebrow::before {
+    content: '◆';
+    color: var(--blood);
+  }
+  .azchron-card-nav {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .azchron-card-nav button {
+    background: transparent;
+    border: 1px solid var(--shadow);
+    color: var(--paper);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.5rem 0.85rem;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .azchron-card-nav button:hover {
+    border-color: var(--blood);
+    color: var(--blood);
+  }
+  .azchron-card-nav button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .azchron-card-date {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 5vw, 56px);
+    color: var(--blood);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+  .azchron-card-title {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 3vw, 36px);
+    color: var(--paper);
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    margin-bottom: 2rem;
+    max-width: 700px;
+  }
+  .azchron-card-type {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--warn);
+    background: rgba(232,184,32,0.08);
+    border: 1px solid rgba(232,184,32,0.3);
+    padding: 0.4rem 0.7rem;
+    margin-bottom: 2rem;
+  }
+  .azchron-card-layers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-top: 1px solid var(--shadow);
+    border-left: 1px solid var(--shadow);
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 700px) {
+    .azchron-card-layers { grid-template-columns: 1fr; }
+    .azchron-card { padding: 1.75rem; top: 1rem; }
+  }
+  .azchron-layer {
+    border-right: 1px solid var(--shadow);
+    border-bottom: 1px solid var(--shadow);
+    padding: 1.25rem 1.25rem;
+    background: rgba(255,255,255,0.015);
+  }
+  .azchron-layer-tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--blood);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .azchron-layer-body {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.65;
+    color: #c5bfb0;
+  }
+  .azchron-layer-body strong { color: var(--paper); }
+  .azchron-card-who {
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.25rem;
+    background: rgba(255,255,255,0.02);
+    border-left: 2px solid var(--mute);
+  }
+  .azchron-card-who-tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--mute);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .azchron-card-who-body {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--paper);
+  }
+  .azchron-card-source {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--mute);
+    text-transform: uppercase;
+    padding-top: 1rem;
+    border-top: 1px solid var(--shadow);
+  }
+
+  /* HUD bar — position within section */
+  .azchron-hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--mute);
+    text-transform: uppercase;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .azchron-hud-bar {
+    flex: 1;
+    height: 2px;
+    background: var(--shadow);
+    min-width: 100px;
+    position: relative;
+    overflow: hidden;
+  }
+  .azchron-hud-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: var(--blood);
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  /* Mobile expediente mode */
+  @media (max-width: 900px) {
+    .azchron-orbit {
+      position: relative;
+      top: auto;
+      height: auto;
+      max-height: 280px;
+      margin-bottom: 0;
+    }
+    .azchron-card { position: relative; top: auto; }
+  }
+
+  /* ===========================
+     OBSERVATORIO DE RESISTENCIAS
+     =========================== */
+  .resist {
+    background:
+      linear-gradient(180deg, var(--ink) 0%, #0a0a0a 100%);
+    padding: 8rem 2rem;
+    border-top: 3px solid var(--blood);
+    position: relative;
+    overflow: hidden;
+  }
+  .resist::before {
+    content: 'RESISTIR';
+    position: absolute;
+    top: 50%;
+    right: -8%;
+    transform: translateY(-50%) rotate(90deg);
+    font-family: var(--font-display);
+    font-size: clamp(160px, 22vw, 360px);
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(200,32,28,0.08);
+    line-height: 0.8;
+    pointer-events: none;
+    letter-spacing: -0.03em;
+    z-index: 0;
+  }
+  .resist .container { position: relative; z-index: 1; }
+
+  /* Era filter pills */
+  .resist-eras {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 4rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--shadow);
+  }
+  .resist-era-pill {
+    background: transparent;
+    border: 1px solid var(--shadow);
+    color: #a89f8a;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+    white-space: nowrap;
+  }
+  .resist-era-pill:hover {
+    border-color: var(--blood);
+    color: var(--paper);
+  }
+  .resist-era-pill.active {
+    background: var(--blood);
+    border-color: var(--blood);
+    color: var(--ink);
+  }
+  .resist-era-pill span { color: inherit; opacity: 0.7; }
+
+  /* Layout */
+  .resist-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+  @media (max-width: 1024px) {
+    .resist-layout { grid-template-columns: 1fr; gap: 2rem; }
+  }
+
+  /* Orbital rail (LEFT — sticky desktop) */
+  .resist-orbit {
+    position: sticky;
+    top: 5rem;
+    align-self: start;
+  }
+  @media (max-width: 1024px) {
+    .resist-orbit { position: relative; top: auto; }
+  }
+  .resist-orbit-inner {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--shadow);
+    padding: 1.5rem;
+    position: relative;
+  }
+  .resist-orbit-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--blood);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--shadow);
+  }
+  .resist-orbit-rail {
+    position: relative;
+    height: 600px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  @media (max-width: 1024px) {
+    .resist-orbit-rail {
+      height: 60px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      padding-bottom: 8px;
+    }
+    .resist-orbit-rail::-webkit-scrollbar { height: 4px; }
+    .resist-orbit-rail::-webkit-scrollbar-track { background: var(--shadow); }
+    .resist-orbit-rail::-webkit-scrollbar-thumb { background: var(--blood); }
+  }
+
+  /* Desktop: vertical rail */
+  .resist-rail-line {
+    position: absolute;
+    left: 28px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom,
+      rgba(200,32,28,0.3) 0%,
+      var(--shadow) 50%,
+      rgba(200,32,28,0.3) 100%);
+  }
+  @media (max-width: 1024px) {
+    .resist-rail-line {
+      left: 0; right: 0; top: 50%;
+      width: 100%; height: 1px;
+    }
+  }
+
+  .resist-node {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    left: 22px;
+    transform: translateY(-50%);
+    background: var(--ink);
+    border: 1px solid var(--mute);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 2;
+  }
+  .resist-node:hover {
+    background: var(--paper);
+    border-color: var(--paper);
+    transform: translateY(-50%) scale(1.4);
+  }
+  .resist-node.active {
+    background: var(--blood);
+    border-color: var(--blood);
+    transform: translateY(-50%) scale(1.6);
+    box-shadow: 0 0 0 4px rgba(200,32,28,0.2);
+  }
+  .resist-node.hidden { opacity: 0.15; pointer-events: none; }
+  .resist-node[data-era="1"]::before,
+  .resist-node[data-era="2"]::before,
+  .resist-node[data-era="3"]::before,
+  .resist-node[data-era="4"]::before,
+  .resist-node[data-era="5"]::before { content: ''; }
+
+  @media (max-width: 1024px) {
+    .resist-node {
+      position: relative;
+      display: inline-block;
+      left: auto;
+      top: 50%;
+      transform: translateY(-50%);
+      margin: 0 6px;
+    }
+    .resist-node:hover { transform: translateY(-50%) scale(1.4); }
+    .resist-node.active { transform: translateY(-50%) scale(1.6); }
+  }
+
+  /* Era zones in rail (background slabs) */
+  .resist-era-band {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background: rgba(200,32,28,0.02);
+    border-left: 2px solid var(--shadow);
+    pointer-events: none;
+  }
+  .resist-era-band-label {
+    position: absolute;
+    left: 50px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--mute);
+    text-transform: uppercase;
+    line-height: 1;
+    pointer-events: none;
+  }
+  @media (max-width: 1024px) {
+    .resist-era-band { display: none; }
+  }
+
+  .resist-orbit-foot {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--shadow);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--mute);
+    letter-spacing: 0.2em;
+  }
+
+  /* Card (RIGHT) */
+  .resist-card-wrap { position: relative; }
+  .resist-card {
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--shadow);
+    padding: 2.5rem;
+    position: relative;
+    min-height: 520px;
+    transition: opacity 0.3s;
+  }
+  .resist-card.swapping { opacity: 0; }
+  .resist-card-counter {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: var(--mute);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .resist-card-counter span#resistIdx { color: var(--blood); font-size: 28px; }
+  .resist-card-counter .sep { margin: 0 0.3rem; }
+
+  .resist-card-era-tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--blood);
+    text-transform: uppercase;
+    padding: 0.4rem 0.7rem;
+    border: 1px solid var(--blood);
+    margin-bottom: 2rem;
+  }
+  .resist-card-date {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 4vw, 44px);
+    line-height: 1;
+    color: var(--paper);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.75rem;
+  }
+  .resist-card-event {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 2.8vw, 32px);
+    line-height: 1.05;
+    color: var(--paper);
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    margin-bottom: 1rem;
+  }
+  .resist-card-type {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--warn);
+    text-transform: uppercase;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--shadow);
+  }
+
+  .resist-card-layers {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .resist-layer {
+    padding-left: 1rem;
+    border-left: 2px solid var(--blood);
+  }
+  .resist-layer-head {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--blood);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .resist-layer-body {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.65;
+    color: #c5bfb0;
+  }
+
+  /* Navigation */
+  .resist-nav {
+    margin-top: 1.5rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  .resist-nav-btn {
+    background: transparent;
+    border: 1px solid var(--shadow);
+    color: var(--paper);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    padding: 0.9rem 1.25rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .resist-nav-btn:hover {
+    border-color: var(--blood);
+    background: var(--blood);
+    color: var(--ink);
+  }
+  .resist-nav-btn .arrow {
+    font-family: var(--font-display);
+    font-size: 16px;
+    line-height: 1;
+  }
+  .resist-progress {
+    height: 2px;
+    background: var(--shadow);
+    overflow: hidden;
+    position: relative;
+  }
+  .resist-progress-fill {
+    height: 100%;
+    background: var(--blood);
+    width: 0%;
+    transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @media (max-width: 600px) {
+    .resist-nav { grid-template-columns: 1fr 1fr; }
+    .resist-progress { grid-column: 1 / -1; order: -1; }
+  }
+
+  .resist-hint {
+    margin-top: 1rem;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--mute);
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  /* Closing note */
+  .resist-closing {
+    margin-top: 6rem;
+    text-align: center;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 3rem 2rem;
+    border-top: 1px solid var(--shadow);
+    border-bottom: 1px solid var(--shadow);
+  }
+  .resist-closing-mark {
+    font-family: var(--font-display);
+    color: var(--blood);
+    font-size: 32px;
+    margin-bottom: 1.5rem;
+  }
+  .resist-closing p {
+    font-family: var(--font-mono);
+    font-size: clamp(14px, 1.6vw, 17px);
+    line-height: 1.75;
+    color: #c5bfb0;
+  }
+  .resist-closing strong { color: var(--paper); }
+
+  /* selection */
+  ::selection { background: var(--blood); color: var(--paper); }
+  /* ============================================
+     CRONOSTATS — strip de cifras post-intro
+     (heredado de azchron, ahora dentro del observatorio)
+     ============================================ */
+  .cronostats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 4rem;
+  }
+  .cronostat {
+    background: var(--ink);
+    padding: 1.5rem 1rem;
+    text-align: center;
+  }
+  .cronostat .n {
+    font-family: var(--font-black);
+    font-size: clamp(2.2rem, 4vw, 3.4rem);
+    color: var(--blood-hot);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .cronostat .l {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-top: 0.6rem;
+  }
+  @media (max-width: 640px) {
+    .cronostats { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ============================================
+     OBSERVATORIO — REDISEÑO MÓVIL
+     Inspiración: Archivio TIM / vertical card stack
+     Desktop intacto; bajo 900px cambia el modelo
+     ============================================ */
+  @media (max-width: 900px) {
+    /* Convertir el rail orbital en lista vertical de cards densas */
+    .resist-orbit {
+      position: relative;
+      top: auto;
+      margin-bottom: 2rem;
+    }
+    .resist-orbit-inner {
+      padding: 0;
+      border: none;
+      background: transparent;
+    }
+    .resist-orbit-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--mute);
+      margin-bottom: 1rem;
+      padding-left: 0.25rem;
+    }
+    /* Rail horizontal scroll-snap de mini-nodos en móvil */
+    .resist-orbit-rail {
+      display: flex !important;
+      flex-direction: row !important;
+      gap: 0.4rem;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      padding: 0.5rem 0.25rem 1rem;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .resist-orbit-rail::-webkit-scrollbar { height: 3px; }
+    .resist-orbit-rail::-webkit-scrollbar-thumb { background: var(--blood); }
+    .resist-orbit-foot {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--mute);
+      letter-spacing: 0.15em;
+      padding: 0 0.25rem;
+    }
+    /* Pills de era: más compactas, scroll horizontal */
+    .resist-eras {
+      display: flex !important;
+      gap: 0.4rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      flex-wrap: nowrap;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: 1.5rem;
+    }
+    .resist-eras::-webkit-scrollbar { display: none; }
+    .resist-era-pill {
+      flex-shrink: 0;
+      font-size: 0.65rem !important;
+      padding: 0.5rem 0.8rem !important;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+    /* Card principal ocupa todo el ancho, layout fluido */
+    .resist-card-wrap {
+      width: 100%;
+    }
+    .resist-card {
+      padding: 1.5rem 1.25rem !important;
+    }
+    .resist-card-event {
+      font-size: clamp(1.3rem, 5vw, 1.7rem) !important;
+      line-height: 1.2;
+    }
+    .resist-card-layers {
+      gap: 1rem !important;
+    }
+    .resist-layer-body {
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+    /* Nav más grande y táctil */
+    .resist-nav {
+      gap: 0.75rem;
+    }
+    .resist-nav-btn {
+      padding: 0.85rem 1rem !important;
+      font-size: 0.75rem !important;
+      min-width: 0;
+      flex: 1;
+    }
+    .resist-nav-btn .arrow { font-size: 1rem; }
+    .resist-hint {
+      font-size: 0.7rem;
+      text-align: center;
+      margin-top: 1rem;
+    }
+  }
+
+  /* Bajo 480px: ajuste extremo */
+  @media (max-width: 480px) {
+    .resist-card-counter { font-size: 0.7rem !important; }
+    .resist-card-era-tag { font-size: 0.65rem !important; }
+    .resist-card-date { font-size: 0.85rem !important; }
+    .resist-layer-head { font-size: 0.7rem !important; }
+  }
+
+  /* ============================================
+     SECCIÓN MÉTODO Y ARCHIVO (09)
+     ============================================ */
+  .method {
+    background: var(--ink);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    padding: 8rem 2rem 6rem;
+  }
+  .method .prose p { max-width: 800px; }
+
+  .method-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.08);
+    margin: 3rem 0 4rem;
+  }
+  .method-stat {
+    background: var(--ink);
+    padding: 1.5rem 1rem;
+    text-align: left;
+  }
+  .method-stat .n {
+    font-family: var(--font-black);
+    font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+    color: var(--paper);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+  .method-stat .l {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--mute);
+    margin-top: 0.6rem;
+  }
+  @media (max-width: 720px) {
+    .method-stats { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* Acordeones de fuentes */
+  .archive-list {
+    border-top: 1px solid rgba(255,255,255,0.12);
+    margin-top: 2rem;
+  }
+  .archive-item {
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+  }
+  .archive-item summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 1.5rem 1rem 1.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: background 0.2s, color 0.2s;
+    user-select: none;
+  }
+  .archive-item summary::-webkit-details-marker { display: none; }
+  .archive-item summary:hover { background: rgba(255,255,255,0.02); }
+  .archive-item summary .arrow {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    color: var(--blood);
+    width: 1.5rem;
+    transition: transform 0.25s;
+    flex-shrink: 0;
+  }
+  .archive-item[open] summary .arrow { transform: rotate(90deg); }
+  .archive-item summary .code {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--mute);
+    width: 70px;
+    flex-shrink: 0;
+  }
+  .archive-item summary .label {
+    font-family: var(--font-display);
+    font-size: clamp(1.1rem, 2vw, 1.5rem);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--paper);
+    flex: 1;
+  }
+  .archive-item[open] summary .label { color: var(--blood-hot); }
+  .archive-item summary .count {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--mute);
+    letter-spacing: 0.1em;
+    flex-shrink: 0;
+  }
+  .archive-body {
+    padding: 0.5rem 0 2rem 2.5rem;
+    border-left: 2px solid rgba(255,255,255,0.05);
+    margin-left: calc(70px + 1rem);
+  }
+  .archive-body p {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--bone);
+    max-width: 750px;
+    margin-bottom: 1rem;
+  }
+  .archive-body p strong { color: var(--paper); }
+  .archive-body p em { color: var(--blood); font-style: normal; }
+  .archive-body ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .archive-body li {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    line-height: 1.5;
+    padding: 0.7rem 0;
+    border-bottom: 1px dashed rgba(255,255,255,0.06);
+    color: var(--bone);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.6rem;
+    align-items: baseline;
+  }
+  .archive-body li::before {
+    content: "◆";
+    color: var(--blood);
+    font-size: 0.6rem;
+  }
+  .archive-body li:last-child { border-bottom: none; }
+  .archive-body a {
+    color: var(--warn);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,102,0,0.55);
+    word-break: break-all;
+    font-weight: 600;
+  }
+  .archive-body a:hover { color: var(--warn-hot); border-bottom-color: var(--warn-hot); }
+  .archive-body .src-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--mute);
+    margin-right: 0.5rem;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 720px) {
+    .archive-body {
+      padding: 0.5rem 0 2rem 0.75rem;
+      margin-left: 0;
+    }
+    .archive-item summary .code { display: none; }
+    .archive-item summary { gap: 0.6rem; padding: 1.25rem 0.5rem 1.25rem 0; }
+  }
+
+  .method-warning {
+    margin-top: 4rem;
+    padding: 2rem;
+    border: 1px solid var(--blood);
+    background: rgba(200,32,28,0.06);
+  }
+  .method-warning .head {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    color: var(--blood-hot);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .method-warning p {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--bone);
+    max-width: 800px;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- CUSTOM CURSOR -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-trail" id="cursorTrail"></div>
+
+
+<!-- READING PROGRESS LINE -->
+<div class="progress-line" id="progressLine"></div>
+
+
+<!-- TOP MARQUEE -->
+<div class="marquee">
+  <div class="marquee-track">
+    <span>$16,220M USD EXPORTACIONES 2025</span>
+    <span>97% PROVIENE DE MANUFACTURA</span>
+    <span>1 DE CADA 4 LABORA +48 HRS/SEMANA</span>
+    <span>SUICIDIO COAHUILA: 9.2/100K · 44% SOBRE MEDIA NACIONAL</span>
+    <span>92.8% DE PATENTES = NO RESIDENTES</span>
+    <span>40,000 PERSONAS / DÍA HACIA RAMOS ARIZPE</span>
+    <span>EMPLEO FEMENINO MANUFACTURA: −5,550 PLAZAS / AÑO</span>
+    <span>0.28% PIB EN I+D · OCDE: 2.72%</span>
+    <span>$16,220M USD EXPORTACIONES 2025</span>
+    <span>97% PROVIENE DE MANUFACTURA</span>
+    <span>1 DE CADA 4 LABORA +48 HRS/SEMANA</span>
+    <span>SUICIDIO COAHUILA: 9.2/100K · 44% SOBRE MEDIA NACIONAL</span>
+    <span>92.8% DE PATENTES = NO RESIDENTES</span>
+    <span>40,000 PERSONAS / DÍA HACIA RAMOS ARIZPE</span>
+    <span>EMPLEO FEMENINO MANUFACTURA: −5,550 PLAZAS / AÑO</span>
+    <span>0.28% PIB EN I+D · OCDE: 2.72%</span>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-walkers" id="walkers"></div>
+
+  <div class="hero-top">
+    <div>
+      VANGUARDIA IA LAB / NARRACIÓN EXPERIMENTAL
+    </div>
+    <div class="hero-top-right">
+      JUNIO 2026<br>
+      <span style="color:var(--paper)">SALTILLO, COAHUILA</span>
+    </div>
+  </div>
+
+  <div class="hero-center">
+    <div class="hero-eyebrow">ENSAYO + DATOS · LECTURA 12 MIN</div>
+    <h1>
+      ZOMBIS<br>
+      <span class="red">DE</span> <span class="outline">MAQUILA</span>
+    </h1>
+    <p class="hero-tagline">
+      <strong style="color:var(--paper)">SUMARIO.</strong> Saltillo trabaja, exporta, madruga y obedece. Pero una ciudad que solo sabe contar fábricas también puede olvidar cómo imaginar futuro. <strong>¿Cuánto más vamos a llamar progreso a esta forma autoexplotable de agotamiento?</strong>
+    </p>
+  </div>
+
+  <div class="hero-bottom">
+    <div class="hero-credit">
+      Ensayo, idea, narrativa y vibe coding: <a href="https://vanguardia.com.mx/autor/-/meta/cesar-gaytan" target="_blank" rel="noopener"><strong>César Gaytán</strong></a>.
+    </div>
+    <div class="scroll-cue">SCROLL ↓ INICIAR</div>
+  </div>
+</section>
+
+<!-- ===========================================
+     SECCIÓN 01: APERTURA / EL ENSAYO
+     =========================================== -->
+<section>
+  <div class="container">
+
+    <h2>Saltillo no necesita <span class="red">cementerios</span> para fabricar muertos vivientes.</h2>
+
+    <div class="prose reveal">
+      <p>
+        Le bastan las alarmas de las cuatro de la mañana, los camiones de personal cruzando avenidas todavía oscuras, los boletines con olor a tinta fresca y optimismo viejo, los cascos blancos, los chalecos reflejantes y las fotografías de funcionarios sonriendo frente a una nave industrial como si acabaran de descubrir el fuego.
+      </p>
+      <p>
+        Saltillo sabe contar fábricas. Sabe contar empleos, exportaciones, inversiones, metros cuadrados de construcción industrial. Sabe contar millones de dólares con una precisión que casi conmueve. <strong>Lo que no sabe contar —o lo que no quiere contar porque quizá daría vergüenza— es cuántas ideas propias produce.</strong>
+      </p>
+      <p>
+        Cuántas patentes nacen aquí. Cuánto software se diseña aquí. Cuántas marcas locales escalan. Cuántos jóvenes pueden <em>imaginar una vida que no empiece con una alarma antes del amanecer</em> ni termine con la cabeza golpeando suavemente contra la ventana de un transporte de personal.
+      </p>
+      <p>
+        El problema no es que Saltillo tenga fábricas. <strong>El problema es que Saltillo parece haber aceptado, con obediencia de perro domesticado, que solo puede ser fábrica.</strong>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ===========================================
+     SECCIÓN 02: EL MODELO INDUSTRIAL
+     =========================================== -->
+<section>
+  <div class="container">
+
+    <h2>Una <span class="red">trampa</span> de éxito.</h2>
+
+    <div class="prose reveal">
+      <p>
+        Coahuila no se volvió dependiente del automotriz por accidente. Lo hizo por <strong>acumulación institucional, comercial y logística durante 50 años</strong>. Eso explica su fuerza actual. También explica por qué la diversificación no ocurrirá sola.
+      </p>
+      <p>
+        El estado cerró 2025 con exportaciones equivalentes al <em>9.7%</em> del total nacional. La manufactura representó el 97% de ese valor. La concentración no es nueva: <strong>en 2014 las actividades automotrices ya explicaban 63.4% de la producción manufacturera del estado</strong>. Una ciudad puede tener industria. Otra cosa es entregarle el alma.
+      </p>
+    </div>
+
+    <div class="stat-deck">
+      <div class="stat-cell w-6 blood" data-num="01">
+        <div class="stat-figure"><span class="slot-counter" data-target="16220">16,220</span><span class="unit">M USD</span></div>
+        <div class="stat-desc">EXPORTACIONES DE COAHUILA EN 2025. EL 97% PROVIENE DE MANUFACTURA. CAÍDA ANUAL DEL 6.2%. EL MÚSCULO PUEDE FALLAR.</div>
+        <div class="stat-src">INEGI · EXPORTACIONES TRIMESTRALES POR ENTIDAD · CIERRE 2025</div>
+      </div>
+      <div class="stat-cell w-3" data-num="02">
+        <div class="stat-figure"><span class="slot-counter" data-target="43.9">43.9</span><span class="unit">%</span></div>
+        <div class="stat-desc">DEL PIB ESTATAL ES MANUFACTURA. LA CONCENTRACIÓN MÁS ALTA DEL PAÍS.</div>
+        <div class="stat-src">INEGI · PIBE 2023</div>
+      </div>
+      <div class="stat-cell w-3" data-num="03">
+        <div class="stat-figure"><span class="slot-counter" data-target="63.4">63.4</span><span class="unit">%</span></div>
+        <div class="stat-desc">DE LA MANUFACTURA ES AUTOMOTRIZ. MONOCULTIVO INDUSTRIAL.</div>
+        <div class="stat-src">INEGI · ESTUDIO SECTORIAL</div>
+      </div>
+
+      <div class="stat-cell w-4" data-num="04">
+        <div class="stat-figure"><span class="slot-counter" data-target="120">120</span><span class="unit">K+</span></div>
+        <div class="stat-desc">EMPLEOS DIRECTOS VINCULADOS AL CLÚSTER AUTOMOTRIZ DE COAHUILA.</div>
+        <div class="stat-src">CIAC · RADAR AUTOMOTRIZ 2025</div>
+      </div>
+      <div class="stat-cell w-4" data-num="05">
+        <div class="stat-figure"><span class="slot-counter" data-target="83">83</span><span class="unit">%</span></div>
+        <div class="stat-desc">DE LAS EXPORTACIONES MEXICANAS DE VEHÍCULOS LIGEROS VAN A EE.UU. UN SOLO MERCADO.</div>
+        <div class="stat-src">INEGI · RAIAVL Q1 2025</div>
+      </div>
+      <div class="stat-cell w-4 paper" data-num="06">
+        <div class="stat-figure"><span class="sign">−</span><span class="slot-counter" data-target="6.2">6.2</span><span class="unit">%</span></div>
+        <div class="stat-desc">CAÍDA ANUAL EN EXPORTACIONES 2025. PRIMER AVISO DE FRAGILIDAD.</div>
+        <div class="stat-src">INEGI · ETEF CIERRE 2025</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE BAND 01 -->
+<div class="quote-band">
+  <blockquote>
+    El capitalismo regional no solo compra fuerza de trabajo. Compra <span class="red">disponibilidad, puntualidad, distancia, paciencia, juventud, sueño,</span> espalda, vista cansada, silencio.
+  </blockquote>
+  <cite>— <strong>César Gaytán</strong> / Ensayo</cite>
+</div>
+
+<!-- ===========================================
+     SECCIÓN 03: QUIÉN COBRA
+     =========================================== -->
+<section>
+  <div class="container">
+
+    <h2>La pregunta no es si <span class="strike">producimos</span>. Es <span class="red">quién cobra.</span></h2>
+
+    <div class="prose reveal">
+      <p>
+        Un territorio puede tener plantas monumentales y estar <em>subordinado intelectualmente</em>. Puede fabricar el futuro de otros. Y quizá eso somos demasiadas veces: una ciudad entrenada para ensamblar futuros ajenos mientras descuida la posibilidad de inventar el propio.
+      </p>
+      <p>
+        <strong>Más de la mitad de los insumos de la cadena automotriz mexicana son importados.</strong> El territorio captura empleo, logística, una porción del valor agregado. Pero no necesariamente la parte más rentable de la cadena. Esa vive en otra parte. En la patente. En el diseño. En el algoritmo. En la marca.
+      </p>
+    </div>
+
+    <div class="chart reveal">
+      <div class="chart-header">
+        <div class="chart-title">// INSUMOS IMPORTADOS EN LA CADENA AUTOMOTRIZ MEXICANA</div>
+        <div class="chart-meta">FUENTE: INEGI · MIP 2018-2022</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-name">Partes automotrices</div>
+        <div class="bar-track"><div class="bar-fill" data-w="61.4"><span class="val">61.4% IMPORTADO</span></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-name">Autos y camiones</div>
+        <div class="bar-track"><div class="bar-fill" data-w="56.4"><span class="val">56.4% IMPORTADO</span></div></div>
+      </div>
+    </div>
+
+    <div class="chart reveal">
+      <div class="chart-header">
+        <div class="chart-title">// PROPIEDAD INTELECTUAL EN MÉXICO (2024) — PATENTES ANTE IMPI</div>
+        <div class="chart-meta">FUENTE: WIPO IP STATISTICS 2024</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-name">No residentes</div>
+        <div class="bar-track"><div class="bar-fill" data-w="92.8"><span class="val">92.8% (15,017 SOLICITUDES)</span></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-name">Residentes mexicanos</div>
+        <div class="bar-track"><div class="bar-fill muted" data-w="7.2"><span class="val">7.2% (1,172)</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===========================================
+     SECCIÓN 04: SCROLLYTELLING — LA JORNADA FANTASMA
+     =========================================== -->
+<section class="scrolly">
+  <div class="container">
+
+    <h2>El trabajo <span class="red">no empieza</span> cuando alguien checa entrada.</h2>
+
+    <div class="scrolly-grid">
+      <div class="scrolly-sticky">
+        <div class="big-stat-display">
+          <div class="figure" id="scrollyFigure">04:00</div>
+          <div class="label" id="scrollyLabel">HORA EN QUE SUENA LA ALARMA</div>
+        </div>
+      </div>
+
+      <div class="scrolly-steps">
+        <div class="scrolly-step" data-fig="04:00" data-label="HORA EN QUE SUENA LA ALARMA">
+          <h4>La alarma.</h4>
+          <p>El uniforme preparado desde un día antes. El café bebido con prisa. La lonchera. Caminar hacia una esquina donde alguien espera el camión de personal.</p>
+        </div>
+
+        <div class="scrolly-step" data-fig="40,000" data-label="PERSONAS / DÍA HACIA RAMOS ARIZPE">
+          <h4>El traslado.</h4>
+          <p>Cada día, 40 mil personas viajan a la zona industrial de Ramos Arizpe. Cuarenta mil cuerpos en tránsito. Cuarenta mil relojes biológicos negociando con la distancia.</p>
+        </div>
+
+        <div class="scrolly-step" data-fig="25.5%" data-label="LABORA MÁS DE 48 HRS / SEMANA">
+          <h4>La jornada.</h4>
+          <p>Uno de cada cuatro trabajadores de la ZM Saltillo labora más de 48 horas semanales (IMCO 2026). Y la jornada se desborda más allá del turno formal.</p>
+        </div>
+
+        <div class="scrolly-step" data-fig="28.2%" data-label="TASA DE CONDICIONES CRÍTICAS DE OCUPACIÓN">
+          <h4>Las condiciones.</h4>
+          <p>Tasa de condiciones críticas de ocupación en Coahuila 4T 2024: 28.2%. Superior al 23.3% de 2023. El cansancio deja de ser accidente y se convierte en paisaje.</p>
+        </div>
+
+        <div class="scrolly-step" data-fig="21.5 hrs" data-label="BRECHA DE TRABAJO NO REMUNERADO (M/H)">
+          <h4>La segunda jornada.</h4>
+          <p>La planta termina, pero la casa no. Las mujeres en México dedican 39.7 hrs semanales a trabajo doméstico y de cuidados. Los hombres, 18.2. Una brecha de 21.5 hrs. Una segunda línea de ensamble sin bono.</p>
+        </div>
+
+        <div class="scrolly-step" data-fig="∞" data-label="LA RUEDA NO PARA">
+          <h4>Y otra alarma.</h4>
+          <p>El tiempo que rodea al trabajo sin ser reconocido como trabajo. <strong>A eso podríamos llamarle jornada fantasma.</strong> No es un término legal. Nadie lo paga con ese nombre. Pero existe. Y en el sureste tiene escala de ciudad.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===========================================
+     SECCIÓN 04.5: RED FLAGS TEST (ZOMBIFICACIÓN SILENCIOSA)
+     =========================================== -->
+<section class="rftest" id="rftest">
+  <div class="container">
+
+    <h2>Red flags de la <span class="red">zombificación silenciosa.</span></h2>
+
+    <p class="rftest-logline">
+      Si marcas demasiadas, no estás exagerando: quizá solo aprendiste a llamar <strong>"normalidad"</strong> a una forma cínica de autoexplotación.
+    </p>
+
+    <p class="rftest-intro">¿Te zombificaron sin darte cuenta?</p>
+
+    <!-- LIVE GAUGE -->
+    <div class="rfgauge">
+      <div class="rfgauge-meter">
+        <div class="rfgauge-meter-label">Zombificación silenciosa — escala 0/100</div>
+        <div class="rfgauge-meter-bar">
+          <div class="rfgauge-meter-fill" id="rfFill"></div>
+          <div class="rfgauge-meter-ticks">
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span>
+            <span></span><span></span>
+          </div>
+        </div>
+        <div class="rfgauge-meter-foot">
+          <span>0% · LIBRE</span>
+          <span>25% · INFECTADO</span>
+          <span>50% · OPERATIVO</span>
+          <span>75% · ZOMBI FUNCIONAL</span>
+          <span>100% · MAQUILA TOTAL</span>
+        </div>
+      </div>
+      <div class="rfgauge-num">
+        <div class="pct" id="rfPct">0%</div>
+        <div class="lbl"><span id="rfCount">0</span> / 25 red flags</div>
+      </div>
+    </div>
+
+    <!-- FLAGS GRID -->
+    <div class="rflag-grid" id="rflagGrid">
+      <!-- Las 25 banderas se generan dinámicamente con JS para mantener el HTML limpio.
+           Pero las dejo en estático para accesibilidad y para que funcione sin JS si falla algo -->
+      <div class="rflag" data-flag="1" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">01</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>El contrato fantasma</strong>No tienes contrato por escrito, pero te dicen que "aquí todos somos de confianza".</div>
+      </div>
+      <div class="rflag" data-flag="2" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">02</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>El IMSS decorativo</strong>No sabes si estás dado de alta en el IMSS, o sospechas que te registraron con un salario decorativo.</div>
+      </div>
+      <div class="rflag" data-flag="3" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">03</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>La nómina OXXO</strong>Te pagan sin recibo claro: efectivo, depósitos raros, cuentas personales o transferencias del OXXO… sí, del OXXO.</div>
+      </div>
+      <div class="rflag" data-flag="4" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">04</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>El sueldo "por fuera"</strong>Te dan una parte del sueldo "por fuera", como si recortarte el futuro fuera una prestación.</div>
+      </div>
+      <div class="rflag" data-flag="5" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">05</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Trabajo sin crédito</strong>No puedes acceder a crédito de vivienda, de auto ni a un préstamo decente, aunque trabajas todos los días.</div>
+      </div>
+      <div class="rflag" data-flag="6" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">06</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>La razón social fantasma</strong>Trabajas para una empresa, pero en los papeles te contrató otra. Magia fiscal con zapatos baratos.</div>
+      </div>
+      <div class="rflag" data-flag="7" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">07</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Freelance sin libertad</strong>Te llaman freelance, socio o colaborador, pero tienes jefe, horario, regaños y cero libertad real.</div>
+      </div>
+      <div class="rflag" data-flag="8" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">08</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Utilidades fantasma</strong>La empresa presume ganancias, expansión y récords, pero para ti nunca hay utilidades.</div>
+      </div>
+      <div class="rflag" data-flag="9" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">09</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>La épica del pepperoni</strong>Trabajas horas extra, pero te las pagan con pizza, aplausos, playeras o promesas.</div>
+      </div>
+      <div class="rflag" data-flag="10" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">10</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Entrada sagrada, salida fantasma</strong>La hora de entrada es sagrada; la hora de salida es "hasta terminar pendientes".</div>
+      </div>
+      <div class="rflag" data-flag="11" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">11</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>El compromiso fuera de horario</strong>Las juntas, capacitaciones y cierres ocurren fuera de horario, pero los llaman "compromiso".</div>
+      </div>
+      <div class="rflag" data-flag="12" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">12</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>WhatsApp grillete</strong>Tu WhatsApp se volvió grillete: te buscan de noche, en domingo o en vacaciones.</div>
+      </div>
+      <div class="rflag" data-flag="13" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">13</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Comer como KPI</strong>Comes frente a la computadora, en la línea, en el coche o de pie, como si masticar también fuera un KPI.</div>
+      </div>
+      <div class="rflag" data-flag="14" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">14</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Vacaciones como asilo político</strong>Tus vacaciones existen, pero pedirlas parece solicitar asilo político.</div>
+      </div>
+      <div class="rflag" data-flag="15" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">15</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Crecimiento de ansiedad</strong>Te prometieron crecimiento, pero solo crecieron tus tareas, tu ansiedad y la lista de pendientes.</div>
+      </div>
+      <div class="rflag" data-flag="16" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">16</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>La puerta muy grande</strong>Cada renuncia ajena termina convertida en más trabajo para ti. Y si protestas, "la puerta está muy grande".</div>
+      </div>
+      <div class="rflag" data-flag="17" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">17</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Pedir aumento es crimen moral</strong>Pedir aumento te da miedo, culpa o una extraña sensación de estar cometiendo un crimen moral.</div>
+      </div>
+      <div class="rflag" data-flag="18" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">18</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Vida-turno</strong>Tu vida gira alrededor del turno, el tráfico, el transporte y la alarma.</div>
+      </div>
+      <div class="rflag" data-flag="19" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">19</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Productividad desde el hospital</strong>Has trabajado enfermo porque descansar se siente como traicionar a la patria de la productividad… incluso desde el hospital.</div>
+      </div>
+      <div class="rflag" data-flag="20" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">20</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Operativo, no humano</strong>Dormir mal, despertar cansado y funcionar de todos modos ya te parece normal. Felicidades: eres operativo.</div>
+      </div>
+      <div class="rflag" data-flag="21" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">21</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Salud mental con globos</strong>La empresa habla de salud mental, pero responde con frases motivacionales, dinámicas con globos y mensajes de "somos una familia".</div>
+      </div>
+      <div class="rflag" data-flag="22" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">22</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Reemplazable, pero indispensable</strong>"Aquí nadie es indispensable", pero se ofenden si actúas como alguien reemplazable y te vas a tu hora.</div>
+      </div>
+      <div class="rflag" data-flag="23" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">23</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Todo es urgente</strong>Todo se vuelve urgente, incluso lo que alguien olvidó planear hace meses.</div>
+      </div>
+      <div class="rflag" data-flag="24" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">24</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>Más con menos, sonriendo</strong>La empresa presume adaptación al cambio, pero eso significa hacer más con menos gente y sonreír en el proceso.</div>
+      </div>
+      <div class="rflag" data-flag="25" tabindex="0" role="checkbox" aria-checked="false">
+        <div class="rflag-num">25</div>
+        <div class="rflag-box" aria-hidden="true"></div>
+        <div class="rflag-text"><strong>El supervisor en tu cabeza</strong>Ya no necesitas que tu jefe te presione: tú solo te culpas por descansar. El supervisor vive en tu cabeza y ni siquiera paga renta.</div>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="rfresult" id="rfresult">
+      <div class="rfresult-label">◆ DIAGNÓSTICO ◆</div>
+      <div class="rfresult-pct" id="rfresultPct">0%</div>
+      <div class="rfresult-tier" id="rfresultTier">SIN DATOS</div>
+      <p class="rfresult-diagnosis" id="rfresultDiag">
+        Marca las red flags que aplican a tu vida laboral. El resultado aparecerá aquí.
+      </p>
+      <div class="rfresult-actions">
+        <button class="rfresult-btn" id="rfShareBtn" type="button">Copiar para compartir</button>
+        <button class="rfresult-btn ghost" id="rfResetBtn" type="button">Reiniciar diagnóstico</button>
+        <span class="rfresult-copied" id="rfCopied">✓ COPIADO</span>
+      </div>
+      <div class="rfresult-share" id="rfShareText"></div>
+    </div>
+  </div>
+</section>
+<!-- ===========================================
+     SECCIÓN 05: SALUD
+     =========================================== -->
+<section>
+  <div class="container">
+
+    <h2><span class="red">No</span> puede afirmarse que la industria cause suicidios. Tampoco puede mirarse hacia otro lado.</h2>
+
+    <div class="prose reveal">
+      <p>
+        Coahuila aparece como un estado industrialmente potente, pero también con señales de salud pública que no pueden despacharse como asuntos privados. <strong>La ética periodística exige no forzar causalidades. También exige no mirar hacia otro lado.</strong>
+      </p>
+      <p>
+        En 2022 Coahuila registró una tasa de suicidio de <em>9.2 por cada 100 mil habitantes</em>, frente a una media nacional de 6.4. El estado pasó de 171 defunciones por suicidio en 2016 a 294 en 2021. Un aumento del 70%. La tendencia ascendente comenzó <strong>antes de la pandemia</strong>.
+      </p>
+    </div>
+
+    <div class="stat-deck">
+      <div class="stat-cell w-4 blood" data-num="07">
+        <div class="stat-figure"><span class="slot-counter" data-target="9.2">9.2</span></div>
+        <div class="stat-desc">TASA DE SUICIDIO EN COAHUILA POR 100K HABITANTES (2022). MEDIA NACIONAL: 6.4. COAHUILA 44% POR ENCIMA.</div>
+        <div class="stat-src">INEGI · ESTADÍSTICAS DE DEFUNCIONES POR SUICIDIO</div>
+      </div>
+      <div class="stat-cell w-4" data-num="08">
+        <div class="stat-figure"><span class="sign">+</span><span class="slot-counter" data-target="70">70</span><span class="unit">%</span></div>
+        <div class="stat-desc">AUMENTO EN DEFUNCIONES POR SUICIDIO 2016 → 2021 (171 → 294). TENDENCIA PRE-PANDEMIA EN COAHUILA.</div>
+        <div class="stat-src">INEGI · ANÁLISIS A TIEMPO MEDIO DIGITAL</div>
+      </div>
+      <div class="stat-cell w-4" data-num="09">
+        <div class="stat-figure"><span class="slot-counter" data-target="12">12</span><span class="unit">MIL M</span></div>
+        <div class="stat-desc">DÍAS DE TRABAJO PERDIDOS AL AÑO A NIVEL MUNDIAL POR DEPRESIÓN Y ANSIEDAD (OMS/OIT).</div>
+        <div class="stat-src">OMS · OIT · DIRECTRICES 2022</div>
+      </div>
+    </div>
+
+    <div class="chart reveal">
+      <div class="chart-header">
+        <div class="chart-title">// DEFUNCIONES POR SUICIDIO EN COAHUILA — CIFRAS ABSOLUTAS</div>
+        <div class="chart-meta">FUENTE: INEGI · 2016-2021</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-name">2016</div>
+        <div class="bar-track"><div class="bar-fill muted" data-w="34"><span class="val">171</span></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-name">2017</div>
+        <div class="bar-track"><div class="bar-fill muted" data-w="40"><span class="val">~200</span></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-name">2019</div>
+        <div class="bar-track"><div class="bar-fill warn" data-w="50"><span class="val">~250</span></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-name">2021</div>
+        <div class="bar-track"><div class="bar-fill" data-w="60"><span class="val">294 · +70% vs 2016</span></div></div>
+      </div>
+    </div>
+
+    <div class="prose reveal" style="margin-top:4rem;">
+      <p>
+        La OMS y la OIT publicaron en 2022 las primeras directrices globales sobre salud mental en el trabajo. Identifican como riesgos: <em>cargas o ritmos excesivos, horarios prolongados, antisociales o inflexibles, y falta de control sobre la carga laboral</em>. Exactamente los factores que caracterizan los turnos rotativos del corredor automotriz.
+      </p>
+      <p>
+        México tiene un marco legal que reconoce parte del problema. La <strong>NOM-035-STPS-2018 es obligatoria, no voluntaria</strong>. La reforma a la Tabla de Enfermedades de Trabajo incluyó trastornos no orgánicos del ciclo sueño-vigilia. Estrés, ansiedad y depresión vinculados al trabajo ya pueden ser reconocidos como enfermedades laborales.
+      </p>
+      <p>
+        Dicho en simple: <strong>la ley ya nombró lo que la cultura laboral suele llamar debilidad.</strong>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE BAND 02 -->
+<div class="quote-band" style="background: var(--ink); color: var(--paper); border-top: 1px solid var(--shadow); border-bottom: 1px solid var(--shadow);">
+  <blockquote style="color: var(--paper);">
+    Un empleo anunciado sin <span class="red">bajas laborales</span> es una fotografía recortada. Un empleo generado sin <span class="red">duración promedio</span> es un acto de fe.
+  </blockquote>
+  <cite>— <strong>César Gaytán</strong> / Ensayo</cite>
+</div>
+
+<!-- ===========================================
+     SECCIÓN 07: ECONOMÍA CREATIVA
+     =========================================== -->
+<section>
+  <div class="container">
+
+    <h2>La <span class="red">creatividad</span> también paga nómina.</h2>
+
+    <div class="prose reveal">
+      <p>
+        Saltillo puede imaginar sin problema otra nave industrial, pero no una economía creativa robusta. Puede anunciar parques industriales, pero no distritos de diseño, laboratorios de software, estudios audiovisuales, empresas de videojuegos, periodismo de datos, inteligencia artificial aplicada.
+      </p>
+      <p>
+        <strong>Quizá porque durante décadas nos educaron para obedecer la máquina, no para imaginarla distinta.</strong>
+      </p>
+    </div>
+
+    <div class="chart reveal">
+      <div class="chart-header">
+        <div class="chart-title">// COMPOSICIÓN DEL PIB DE COAHUILA (2023)</div>
+        <div class="chart-meta">FUENTE: INEGI · PIBE 2023</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-name">Manufactura</div>
+        <div class="bar-track"><div class="bar-fill" data-w="88"><span class="val">43.9% del PIB</span></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-name">Serv. profesionales</div>
+        <div class="bar-track"><div class="bar-fill muted" data-w="2.2"><span class="val">1.1%</span></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-name">Medios masivos</div>
+        <div class="bar-track"><div class="bar-fill muted" data-w="0.8"><span class="val">0.4%</span></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-name">Esparcimiento cultural</div>
+        <div class="bar-track"><div class="bar-fill muted" data-w="0.4"><span class="val">0.2%</span></div></div>
+      </div>
+    </div>
+
+    <div class="stat-deck">
+      <div class="stat-cell w-6 paper" data-num="10">
+        <div class="stat-figure">$<span class="slot-counter" data-target="1.5">1.5</span><span class="unit">B USD</span></div>
+        <div class="stat-desc">EXPORTACIONES GLOBALES DE SERVICIOS CREATIVOS EN 2023. SOFTWARE, I+D, DISEÑO, ARQUITECTURA, AUDIOVISUAL. NO SON MANUALIDADES.</div>
+        <div class="stat-src">UNCTAD16 · CREATIVE ECONOMY OUTLOOK 2024</div>
+      </div>
+      <div class="stat-cell w-3" data-num="11">
+        <div class="stat-figure"><span class="slot-counter" data-target="2.8">2.8</span><span class="unit">%</span></div>
+        <div class="stat-desc">DEL PIB NACIONAL APORTA EL SECTOR CULTURA EN MÉXICO. 1.43 MILLONES DE EMPLEOS.</div>
+        <div class="stat-src">INEGI · CSCM 2024</div>
+      </div>
+      <div class="stat-cell w-3 blood" data-num="12">
+        <div class="stat-figure"><span class="slot-counter" data-target="0.28">0.28</span><span class="unit">%</span></div>
+        <div class="stat-desc">DEL PIB INVIERTE MÉXICO EN I+D. OCDE: 2.72%. LA DISTANCIA NO ES CONTABLE. ES CIVILIZATORIA.</div>
+        <div class="stat-src">UNESCO · BANCO MUNDIAL · OCDE</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===========================================
+     SECCIÓN 08: MANIFIESTO ZOMBI
+     =========================================== -->
+<section class="manifesto">
+  <div class="container">
+
+    <h2 style="color: var(--ink); margin-bottom: 4rem;">
+      No son zombis los <span class="strike">trabajadores</span>.<br>
+      <span style="color: var(--ink);">Lo zombi está en otro lado.</span>
+    </h2>
+
+    <ul class="manifesto-list">
+      <li>Zombi es <strong>el indicador económico</strong> cuando camina sin cuerpo.</li>
+      <li>Zombi es <strong>el empleo anunciado</strong> cuando no sabemos si es plaza nueva, reemplazo, contrato temporal o hueco fresco dejado por alguien que ya no aguantó.</li>
+      <li>Zombi es <strong>el boletín</strong> que presume altas sin mostrar bajas.</li>
+      <li>Zombi es <strong>la cifra laboral</strong> que no trae salario, duración, turno, traslado, enfermedad ni vida.</li>
+      <li>Zombi es <strong>una ciudad</strong> que presume estar viva porque nunca se detiene, aunque no se pregunte si su gente vive mejor.</li>
+      <li>Zombi es <strong>el gobierno</strong> cuando presume empleos sin explicar cuántos son nuevos y cuántos reemplazan ausencias.</li>
+      <li>Zombi es <strong>una economía</strong> que presume fábricas pero no ideas propias.</li>
+      <li>Zombi es <strong>el progreso</strong> que no sabe dormir.</li>
+      <li>Zombi es <strong>el futuro</strong> cuando ya no permite imaginar otro.</li>
+    </ul>
+  </div>
+</section>
+
+
+
+
+<!-- ===========================================
+     SECCIÓN 09·5: OBSERVATORIO DE RESISTENCIAS
+     Movimientos anti-zombis · Saltillo 1580-2026
+     =========================================== -->
+<section class="resist" id="resist">
+  <div class="container">
+
+    <h2>500 años de gente <span class="red">negándose</span> a obedecer.</h2>
+
+    <div class="prose reveal" style="margin-bottom:2.5rem;">
+      <p>
+        Si el zombi es <em>quien obedece sin preguntar</em>, esta ciudad también tiene una larga línea de ensamble de <strong>no-obediencia</strong>. Antes del nearshoring estuvieron los huachichiles. Antes del paro técnico en GM estuvo la huelga en Cinsa-Cifunsa. Antes de la NOM-035 estuvieron las fundidoras tomadas, los magisteriales bloqueando avenidas, los ex trabajadores de AHMSA caminando hasta Saltillo para exigir lo que les robaron.
+      </p>
+      <p>
+        Lo que sigue es un <strong>archivo de estaciones de conflicto</strong>: 76 momentos documentados en que alguien decidió no funcionar sin fricción. No resuelve nada. Sirve para algo más pequeño y más necesario: <strong>desmentir la idea de que Saltillo siempre fue dócil.</strong>
+      </p>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="cronostats reveal">
+      <div class="cronostat"><div class="n">76</div><div class="l">estaciones</div></div>
+      <div class="cronostat"><div class="n">500</div><div class="l">años</div></div>
+      <div class="cronostat"><div class="n">5</div><div class="l">eras</div></div>
+      <div class="cronostat"><div class="n">2026</div><div class="l">última estación</div></div>
+    </div>
+
+    <!-- ERA FILTER PILLS -->
+    <div class="resist-eras" id="resistEras">
+      <button class="resist-era-pill active" data-era="all">TODAS · <span id="countAll">76</span></button>
+      <button class="resist-era-pill" data-era="1">I · COLONIA · 1580-1810</button>
+      <button class="resist-era-pill" data-era="2">II · INDEP. + REFORMA · 1810-1880</button>
+      <button class="resist-era-pill" data-era="3">III · PORFIRIATO + REVOL. · 1880-1940</button>
+      <button class="resist-era-pill" data-era="4">IV · MX INDUSTRIAL · 1940-2000</button>
+      <button class="resist-era-pill" data-era="5">V · NEARSHORING · 2000-2026</button>
+    </div>
+
+    <!-- MAIN LAYOUT: orbit + card -->
+    <div class="resist-layout">
+
+      <!-- LEFT: orbital map (sticky) -->
+      <div class="resist-orbit">
+        <div class="resist-orbit-inner">
+          <div class="resist-orbit-label">// LÍNEA DE ENSAMBLE INVERSA</div>
+          <div class="resist-orbit-rail" id="resistRail"></div>
+          <div class="resist-orbit-foot">
+            <div>1580 ←</div>
+            <div>→ 2026</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: active card + navigation -->
+      <div class="resist-card-wrap">
+        <div class="resist-card" id="resistCard">
+          <div class="resist-card-counter">
+            <span id="resistIdx">01</span><span class="sep"> / </span><span id="resistTotal">76</span>
+          </div>
+          <div class="resist-card-era-tag" id="resistEraTag">ERA I · COLONIA</div>
+          <div class="resist-card-date" id="resistDate">—</div>
+          <h3 class="resist-card-event" id="resistEvent">—</h3>
+          <div class="resist-card-type" id="resistType">—</div>
+
+          <div class="resist-card-layers">
+            <div class="resist-layer">
+              <div class="resist-layer-head">◆ INVOLUCRADOS</div>
+              <div class="resist-layer-body" id="resistActors">—</div>
+            </div>
+            <div class="resist-layer">
+              <div class="resist-layer-head">◆ MOTIVO</div>
+              <div class="resist-layer-body" id="resistWhy">—</div>
+            </div>
+            <div class="resist-layer">
+              <div class="resist-layer-head">◆ IMPACTO</div>
+              <div class="resist-layer-body" id="resistImpact">—</div>
+            </div>
+            <div class="resist-layer">
+              <div class="resist-layer-head">◆ FUENTE / ESTADO</div>
+              <div class="resist-layer-body" id="resistSource">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="resist-nav">
+          <button class="resist-nav-btn" id="resistPrev" type="button" aria-label="Anterior">
+            <span class="arrow">←</span> ANTERIOR
+          </button>
+          <div class="resist-progress">
+            <div class="resist-progress-fill" id="resistProgress"></div>
+          </div>
+          <button class="resist-nav-btn" id="resistNext" type="button" aria-label="Siguiente">
+            SIGUIENTE <span class="arrow">→</span>
+          </button>
+        </div>
+        <div class="resist-hint">Usa ← → en el teclado · o haz clic en cualquier nodo del mapa</div>
+      </div>
+    </div>
+
+    <!-- CLOSING NOTE -->
+    <div class="resist-closing reveal">
+      <div class="resist-closing-mark">◆</div>
+      <p>
+        <strong>76 actos.</strong> Algunos triunfaron. Muchos fueron aplastados. Casi ninguno aparece en los boletines oficiales de inversión.<br>
+        Pero todos demuestran lo mismo: la zombificación no es un destino. Es una decisión que alguien siempre se negó a tomar.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<script id="resistData" type="application/json">[{"n": "1", "date": "Finales del siglo XVI", "event": "Resistencias huachichiles en el valle de Saltillo", "type": "Resistencia indígena contra dominación colonial y trabajo forzado", "actors": "Huachichiles; Zapalinamé; Cilaván; colonizadores españoles; misión franciscana", "why": "Avance colonial, evangelización, apropiación territorial y sometimiento de población indígena.", "impact": "Incendio de misión franciscana y edificaciones; refugio indígena en la serranía; primer trazo de resistencia contra el régimen colonial de trabajo y control.", "source": "Confirmado como antecedente histórico. (sierrazapaliname.mx)", "era": 1}, {"n": "2", "date": "1589", "event": "Tratado de paz con los chichimecas", "type": "Pacificación colonial / contención de resistencia indígena", "actors": "Gobernador Rodrigo de Río Loza; naciones chichimecas", "why": "Décadas de ataques contra haciendas, ranchos y espacios de trabajo forzado.", "impact": "Sometimiento negociado: entrega de carne, maíz y ropa durante varios años para apaciguar temporalmente la zona.", "source": "Gazeta / AMS.", "era": 1}, {"n": "3", "date": "marzo de 1600", "event": "Levantamiento de los irritilas en Parras", "type": "Rebelión indígena regional", "actors": "Irritilas; religiosos; colonizadores; españoles de la misión de Parras", "why": "Desacreditación de autoridades rituales indígenas y presión evangelizadora-colonial.", "impact": "Matanza de españoles y huida a la serranía; evidencia de resistencia cultural, religiosa y material frente al sistema colonial.", "source": "Gazeta / AMS.", "era": 1}, {"n": "4", "date": "1616", "event": "Rebelión tepehuana con impacto en alrededores de Saltillo y Monterrey", "type": "Rebelión indígena regional", "actors": "Tepehuanes; españoles; ministros religiosos; mulatos; indígenas aliados al sistema europeo", "why": "Rebelión nacida en Durango contra el orden colonial y extendida al noreste.", "impact": "Ataques contra españoles, religiosos, mulatos e indígenas colaboradores; desestabilización del sistema colonial regional.", "source": "Gazeta / AMS.", "era": 1}, {"n": "5", "date": "1644", "event": "Gran Rebelión del Norte", "type": "Rebelión indígena armada", "actors": "Tobosos; cabezas; salineros; mamites; colorados; Martín de Zavala", "why": "Levantamiento contra poblaciones españolas y régimen colonial.", "impact": "Represión “a fuego y sangre” comandada por Martín de Zavala; debilitamiento temporal del levantamiento.", "source": "Gazeta / AMS.", "era": 1}, {"n": "6", "date": "1666-1669", "event": "Ataques contra ranchos, arrieros, mineros y tenateros", "type": "Ataque a redes laborales y extractivas", "actors": "Indios bárbaros; arrieros; mineros; tenateros del capitán Gregorio Fernández; soldados tlaxcaltecas", "why": "Conflicto contra ranchos, caminos, minería y cadenas de trabajo colonial.", "impact": "En 1669 fueron atacados tenateros en el cerro de las Mitras; el cabildo ordenó persecución con soldados tlaxcaltecas; captura de decenas de indígenas, sobre todo mujeres y niños.", "source": "Gazeta / AMS.", "era": 1}, {"n": "7", "date": "enero de 1684", "event": "Fuga de trabajadores por deuda", "type": "Fuga laboral / peonaje por deudas", "actors": "Indios Andrés y Gonzalo; hacienda de Nicolás Guajardo; sargento mayor Rodrigo Morales", "why": "Trabajadores huyeron tras recibir jornales adelantados, evitando cumplir labores y deuda.", "impact": "La autoridad ordenó perseguirlos para obligarlos a pagar con trabajo o dinero; evidencia de peonaje coercitivo.", "source": "Gazeta / AMS.", "era": 1}, {"n": "8", "date": "enero de 1690", "event": "Reyerta laboral en mina de Santa Ana", "type": "Conflicto minero / violencia laboral", "actors": "Miguel de Aldaco; trabajador Julián Ramos; mayordomos de la mina", "why": "Agresión para impedir que Julián Ramos trabajara en la mina por órdenes de mayordomos.", "impact": "Muestra control violento del acceso al trabajo, jerarquías mineras y disciplina laboral por intermediarios.", "source": "Gazeta / AMS.", "era": 1}, {"n": "9", "date": "diciembre de 1692", "event": "Litigio por fuerza de trabajo esclava de Salvador Agundis", "type": "Conflicto por propiedad de trabajo esclavizado", "actors": "Doña Constanza Martínez; presbítero Juan Antonio de Llerena; mulato esclavo Salvador Agundis", "why": "Disputa por propiedad del esclavo y pago por un año de trabajo prestado al sacerdote.", "impact": "Evidencia del trabajador esclavizado como instrumento económico transferible y fuente de valor.", "source": "Gazeta / AMS.", "era": 1}, {"n": "10", "date": "diciembre de 1714", "event": "Alzamiento de los “tripas blancas”", "type": "Rebelión indígena regional", "actors": "Cacique Don Dieguillo; grupos indígenas; poblaciones de Coahuila, Nueva Vizcaya y Nuevo Reino de León", "why": "Levantamiento contra el orden regional y rutas comerciales.", "impact": "Trastorno de rutas comerciales; escasez de hombres y armas para trabajo y defensa.", "source": "Gazeta / AMS.", "era": 1}, {"n": "11", "date": "1 de abril de 1735", "event": "Reclamo de Juan de Saucedo por salario retenido", "type": "Demanda individual por salarios caídos", "actors": "Juan de Saucedo; capitán Ignacio Zertuche", "why": "Saucedo trabajó un año y seis meses en labores de campo con promesa de 10 pesos mensuales, pero no recibió pago.", "impact": "Reclamo equivalente a 18 meses de salario; antecedente de demanda laboral por sueldo retenido.", "source": "Gazeta / AMS.", "era": 1}, {"n": "12", "date": "enero de 1784", "event": "Queja laboral-política de indígenas tlaxcaltecas", "type": "Defensa de derecho al trabajo y sustento", "actors": "Grupo numeroso de tlaxcaltecas; protector de indios; hacendados como San Miguel del Marqués de Aguayo", "why": "Denunciaron que hacendados les impedían trabajar sus tierras, violando Cédulas Reales.", "impact": "Defensa de sustento, tierra y autonomía material; uso de la legalidad colonial contra hacendados.", "source": "Gazeta / AMS.", "era": 1}, {"n": "13", "date": "1814", "event": "Convenio de protección del gremio de arrieros", "type": "Negociación gremial / protección de herramientas de trabajo", "actors": "Arrieros de Saltillo; gobierno español; alcalde; rutas hacia Béjar, Texas", "why": "El gobierno exigió mulas para transportar víveres y equipo militar durante la Guerra de Independencia.", "impact": "Los arrieros lograron convenio para que el gobierno indemnizara mulas perdidas o robadas en el trayecto; antecedente de protección laboral-gremial.", "source": "Gazeta / AMS.", "era": 2}, {"n": "14", "date": "1842-1843", "event": "Formación de la fábrica textil La Hibernia", "type": "Industrialización temprana", "actors": "Santiago Heweston; Nicolás Pendergast; Pedro Hale; trabajadores textiles no plenamente identificados", "why": "Renta de antigua hacienda de Santa Ana y uso de agua, molino y tierras para producción textil.", "impact": "Primer paisaje fabril relevante en Saltillo; transición de hacienda/molino a fábrica.", "source": "Confirmado; falta rastreo laboral fino. (El Heraldo de Saltillo)", "era": 2}, {"n": "15", "date": "1856", "event": "Fábrica textil El Labrador", "type": "Trabajo fabril textil", "actors": "Francisca Arizpe viuda de Barousse; 19 hombres; 20 mujeres; niños y niñas trabajadores", "why": "Producción de manta con fuerza hidráulica; más de 16 mil piezas hacia finales del siglo XIX.", "impact": "Evidencia de trabajo femenino e infantil: hombres ganaban 38 centavos diarios, mujeres 25 y niños 18.", "source": "Confirmado. (vanguardia.com.mx)", "era": 2}, {"n": "16", "date": "1856 / finales del XIX", "event": "Fábrica Dávila de Hoyos / Bella Unión en corredor Saltillo-Arteaga", "type": "Trabajo fabril regional", "actors": "Operarios hombres, mujeres y niños; empresarios textiles", "why": "Producción textil en entorno regional; hacia finales del XIX producía cerca de 500 mil metros de manta al año.", "impact": "Amplía el mapa laboral al corredor Saltillo-Arteaga; confirma presencia de mujeres y niños en trabajo textil regional.", "source": "Confirmado. (vanguardia.com.mx)", "era": 2}, {"n": "17", "date": "1857 en adelante", "event": "Disolución del viejo orden gremial y ascenso mutualista", "type": "Transición gremio-mutualidad", "actors": "Artesanos; trabajadores urbanos; sociedades de socorro", "why": "Tras Leyes de Reforma, artesanos quedaron más expuestos y surgieron sociedades mutualistas.", "impact": "Base cultural del sindicalismo posterior: cuota, asamblea, caja, representación, escuela y solidaridad.", "source": "Contexto nacional aplicable a Saltillo. (ciencia.sectei.cdmx.gob.mx)", "era": 2}, {"n": "18", "date": "1 de enero de 1865", "event": "Fundación de la Sociedad Mutualista Zarco de Artesanos", "type": "Mutualismo artesanal", "actors": "Francisco Zarco; Esteban García; artesanos y comerciantes saltillenses", "why": "Impulso de ayuda mutua durante la estancia de Juárez y Zarco en Saltillo.", "impact": "Una de las primeras instituciones mutualistas del país; préstamos, escuelas, bibliotecas y apoyo entre socios.", "source": "Confirmado. (El Heraldo de Saltillo)", "era": 2}, {"n": "19", "date": "1865", "event": "Primera mesa directiva de la Zarco de Artesanos", "type": "Organización formal mutualista", "actors": "Esteban García; Vidal Cano; José María de León; Anastacio Martínez; José María Arenas; Valentín Medina; Cleofas Vega; Gerónimo Ayala; Francisco Ramos", "why": "Organización formal de artesanos y comerciantes bajo principios de ayuda, educación y superación.", "impact": "Aparece una burocracia popular previa al sindicato moderno: presidente, secretario, tesorero y vocales.", "source": "Confirmado. (El Heraldo de Saltillo)", "era": 2}, {"n": "20", "date": "1871-1876", "event": "Gran Círculo de Obreros de México y proyecto de “república del trabajo”", "type": "Contexto nacional mutualista", "actors": "Mutualistas; artesanos; obreros urbanos; prensa obrera", "why": "Proyecto de valorización del trabajo frente al capital.", "impact": "Ayuda a leer el mutualismo saltillense dentro de una cultura obrera nacional previa al sindicato moderno.", "source": "Contexto nacional. (SciELO)", "era": 2}, {"n": "21", "date": "1 de diciembre de 1872", "event": "Levantamiento de puesteros ambulantes de calle Landín", "type": "Protesta de economía popular urbana", "actors": "Puesteros ambulantes; alcalde Jesús Valdés Mejía; gobernador; Congreso", "why": "Orden municipal de retirar puestos por vialidad y salubridad.", "impact": "Vendedores presentaron amparos, quejas y protestas para defender sus costumbres comerciales; antecedente de lucha por derecho al espacio público y sustento.", "source": "Gazeta / AMS.", "era": 2}, {"n": "22", "date": "1880-1905", "event": "Transición nacional de mutualidades a proletariado industrial", "type": "Cambio estructural", "actors": "Artesanos proletarizados; obreros industriales; ferrocarrileros; mineros; textileros", "why": "Ferrocarril, inversión extranjera, monetarización, fábricas y declive del taller artesanal.", "impact": "Marco para entender el Saltillo porfiriano: menos taller autónomo, más fábrica; menos oficio protegido, más salario dependiente.", "source": "Contexto nacional. (Revistas UNAM)", "era": 3}, {"n": "23", "date": "marzo de 1889", "event": "Fundación del Gran Círculo de Obreros General Victoriano Cepeda en Saltillo", "type": "Mutualismo obrero", "actors": "Obreros y artesanos saltillenses", "why": "Agrupación mutualista con fines de auxilio, entretenimiento y preparación moral e intelectual.", "impact": "Primer círculo local con lenguaje explícitamente obrero; requiere rastrear estatutos, socios y vínculos políticos.", "source": "Confirmado. (Seducoahuila)", "era": 3}, {"n": "24", "date": "1889", "event": "Compañía Industrial Saltillera y fábrica Bella Unión", "type": "Industrialización regional", "actors": "Dámaso Rodríguez; Guillermo Purcell; Marcelino Garza; obreros textiles; campesinos incorporados", "why": "Operación de Bella Unión, La Purísima y La Unión.", "impact": "La fábrica originó un poblado y absorbió población campesina por necesidad económica.", "source": "Confirmado. (Secretaría de Medio Ambiente)", "era": 3}, {"n": "25", "date": "Década de 1890", "event": "Consolidación del trabajo textil femenino e infantil", "type": "Trabajo fabril con dimensión de género e infancia", "actors": "Obreras textiles; niños y niñas; empresarios textiles", "why": "Incorporación de mujeres y menores a fábricas con salarios diferenciados.", "impact": "Obliga a escribir la historia obrera local incluyendo género e infancia explotada.", "source": "Confirmado con datos textiles. (vanguardia.com.mx)", "era": 3}, {"n": "26", "date": "1896", "event": "Huelga ferrocarrilera en Ciudad Porfirio Díaz / Piedras Negras", "type": "Antecedente regional coahuilense", "actors": "Trabajadores del Ferrocarril Internacional", "why": "Huelga por mejores salarios.", "impact": "No prosperó, pero fue germen de organización obrera influida por el Partido Liberal.", "source": "Regional, no Saltillo. (Seducoahuila)", "era": 3}, {"n": "27", "date": "1906", "event": "Organización de forjadores y obreros textiles en Coahuila", "type": "Proto-sindicalismo regional", "actors": "Ferrocarrileros; textileros; Partido Liberal Mexicano; Gran Círculo de Obreros Libres", "why": "Organización más mutualista que sindical; circulación de prensa obrera como Revolución Social.", "impact": "El obrerismo coahuilense entra a fase más política y huelguística.", "source": "Regional. (Seducoahuila)", "era": 3}, {"n": "28", "date": "4 de marzo de 1906", "event": "Fundación de la Sociedad Mutualista y Recreativa Manuel Acuña", "type": "Mutualismo de empleados de comercio", "actors": "Francisco Fuentes Fregoso; Leopoldo Huerta; empleados de comercio; socios saltillenses", "why": "Nació como Círculo Proteccionista y Recreativo de Empleados de Comercio Manuel Acuña.", "impact": "Educación, cultura obrera, primaria nocturna para niños pobres que trabajaban por la mañana, biblioteca y sociabilidad popular.", "source": "Confirmado. (El Heraldo de Saltillo)", "era": 3}, {"n": "29", "date": "5 de marzo de 1908", "event": "Fundación de Sociedad Mutualista Obreros del Progreso", "type": "Mutualismo obrero", "actors": "Obreros; pequeños comerciantes; Rafael Cepeda; José Rodríguez González como referente doctrinal", "why": "Fondo de ayuda, compra comunitaria, ahorro, préstamo, salón de asamblea y recreación.", "impact": "Confirma que Saltillo tenía cultura obrera organizada antes de la CROM.", "source": "Confirmado. (vanguardia.com.mx)", "era": 3}, {"n": "30", "date": "1-12 de mayo de 1918", "event": "Congreso Nacional Obrero de Saltillo y fundación de la CROM", "type": "Confederación obrera nacional", "actors": "Luis N. Morones; 115 delegados de 18 estados; trabajadores metalúrgicos, electricistas, textiles, ferrocarrileros, tranviarios, mineros, artesanos y campesinos", "why": "Organización nacional del movimiento obrero posrevolucionario.", "impact": "Saltillo se vuelve sede de nacimiento de la Confederación Regional Obrera Mexicana.", "source": "Confirmado. (Memoria Política de México)", "era": 3}, {"n": "31", "date": "1918", "event": "Participación del gobierno de Coahuila en el Congreso Obrero", "type": "Organización obrera institucional", "actors": "Jacinto B. Treviño; Gustavo Espinosa Mireles; Secretaría de Industria, Comercio y Trabajo", "why": "El gobierno estatal impulsó el Congreso Nacional Obrero de Saltillo.", "impact": "El sindicalismo moderno nace en tensión entre organización obrera y diseño estatal.", "source": "Confirmado en AGN. (Archivo General de la Nación)", "era": 3}, {"n": "32", "date": "1919", "event": "Empleados ferrocarrileros y conflicto vecinal por pulquería", "type": "Tensión social alrededor de trabajadores", "actors": "Empleados ferrocarrileros; vecinos; pulquería en Juárez y La Llave; municipio", "why": "Llegada de trabajadores por nueva línea ferroviaria y presencia obrera en pulquerías céntricas.", "impact": "Vecinos exigieron reubicación de la pulquería por escándalos; muestra vigilancia moral sobre ocio obrero.", "source": "Gazeta / AMS.", "era": 3}, {"n": "33", "date": "1920-1932", "event": "Organizaciones obreras femeniles y Alianza Femenil Antialcohólica en Saltillo", "type": "Movimiento laboral-social con perspectiva de género", "actors": "Mujeres trabajadoras; organizaciones obreras femeniles; congregaciones protestantes", "why": "Campañas antialcohólicas, reforma social, vida obrera, violencia doméstica, moral pública y salud social.", "impact": "Muestra dimensión obrera no salarial: mujeres organizadas por condiciones de vida, familia, cuerpo, comunidad y disciplina laboral.", "source": "Confirmado. (ResearchGate)", "era": 3}, {"n": "34", "date": "12 de junio de 1921", "event": "Sociedad Mutualista Obrera Oriente de Coahuila / Saltillo Oriente", "type": "Mutualismo obrero", "actors": "Pueblo Obrero de Saltillo; Gabino López", "why": "Convocatoria obrera para crear nueva sociedad mutualista.", "impact": "Amplía la red de organizaciones obreras y mutualistas de Saltillo.", "source": "Confirmado. (Seducoahuila)", "era": 3}, {"n": "35", "date": "1925", "event": "Fábrica textil El Carmen en Saltillo", "type": "Trabajo textil / sindicalismo textil", "actors": "Emilio Arizpe Santos; obreros textiles; CROC", "why": "Fundación de fábrica textil.", "impact": "El textil sigue como base del mundo obrero local antes del predominio metalmecánico y automotriz.", "source": "Confirmado como referencia histórica. (Seducoahuila)", "era": 3}, {"n": "36", "date": "septiembre de 1926", "event": "Plantón de Agustín Jaime contra el Ayuntamiento", "type": "Plantón / protesta individual", "actors": "Agustín Jaime; Ayuntamiento; empleados municipales; vacas llevadas a explanada municipal", "why": "Conflicto laboral o administrativo con negativa de empleados municipales a transigir.", "impact": "Agustín Jaime declaró que no se movería hasta que le resolvieran lo justo; protesta performática con medios de subsistencia.", "source": "Gazeta / AMS.", "era": 3}, {"n": "37", "date": "marzo de 1930", "event": "Gestión de parque obrero por Unión de Zapateros", "type": "Organización sindical / demanda de espacio obrero", "actors": "Liga Socialista de Coahuila; Unión de Zapateros y Similares", "why": "Solicitud de construir un parque obrero cerca del Hospital de Concentración de Ferrocarriles.", "impact": "Evidencia sindicalismo moderno y demanda de espacios dignos de recreación para trabajadores.", "source": "Gazeta / AMS.", "era": 3}, {"n": "38", "date": "1931 en adelante", "event": "Ley Federal del Trabajo y nuevo marco jurídico", "type": "Institucionalización laboral", "actors": "Estado mexicano; sindicatos; trabajadores", "why": "Reglamentación del Artículo 123.", "impact": "Las luchas obreras entran en etapa más jurídica, burocrática y estatal.", "source": "Contexto nacional. (Revistas UNAM)", "era": 3}, {"n": "39", "date": "Marzo-abril de 1973", "event": "Movimiento de autonomía universitaria de la UAdeC como preámbulo", "type": "Movimiento estudiantil con solidaridad obrera", "actors": "Estudiantes; universitarios; sectores obreros solidarios", "why": "Ambiente de politización local y vínculo entre estudiantes y trabajadores.", "impact": "Prepara condiciones culturales y políticas para la huelga industrial de 1974.", "source": "Confirmado como antecedente. (El Coahuilense)", "era": 4}, {"n": "40", "date": "3 de abril de 1974", "event": "Asamblea previa a huelga Cinsa-Cifunsa", "type": "Rebelión sindical interna", "actors": "Trabajadores de Cinsa y Cifunsa; Salvador Alcázar; Margarito Carranza; CTM; Frente Auténtico del Trabajo", "why": "Rechazo a dirigentes charros que firmaban contratos sin consulta.", "impact": "Inicio real de rebelión contra contrato de protección, simulación sindical y subordinación patronal.", "source": "Confirmado. (El Coahuilense)", "era": 4}, {"n": "41", "date": "16 de abril-3 de junio de 1974", "event": "Gran huelga de Cinsa-Cifunsa", "type": "Huelga industrial", "actors": "Cerca de 6 mil trabajadores; GIS; familia López del Bosque; CTM; FAT; estudiantes; familias obreras", "why": "Bajos salarios, eventuales sin base, acoso sexual contra obreras, malas condiciones, control sindical charro, exigencia salarial.", "impact": "Duró 49 días; logró aumento salarial y prestaciones; visibilizó abuso contra mujeres; fracturó paternalismo industrial; dejó represalias, despidos y listas negras.", "source": "Confirmado. (Zócalo)", "era": 4}, {"n": "42", "date": "1974", "event": "Solidaridad comunitaria durante huelga Cinsa-Cifunsa", "type": "Apoyo obrero-estudiantil-popular", "actors": "UAdeC; Tecnológico de Saltillo; sindicatos; familias; prensa local", "why": "Defensa de trabajadores en huelga y rechazo a estructura patronal.", "impact": "Trastocó barrios, comunidades y vida cotidiana de Saltillo.", "source": "Confirmado. (El Coahuilense)", "era": 4}, {"n": "43", "date": "junio de 1974", "event": "Fin de huelga Cinsa-Cifunsa", "type": "Resolución laboral", "actors": "Trabajadores; CTM; empresarios; gobierno; Salvador Alcázar; Gaspar Valdés; Fidel Velázquez", "why": "Negociación final del conflicto.", "impact": "Aumento salarial de 20%, pago de 60% de salarios caídos según esta fuente, incremento de seguro de vida y prestaciones.", "source": "Confirmado en Revista Coahuilense de Historia. (Seducoahuila)", "era": 4}, {"n": "44", "date": "marzo de 1982", "event": "Constitución del SUTAUAAAN", "type": "Sindicato académico", "actors": "98 académicos de la UAAAN", "why": "Organización sindical de profesores de la Narro.", "impact": "Institucionaliza a la Narro como polo laboral recurrente en Saltillo.", "source": "Confirmado. (Sutauaaan)", "era": 4}, {"n": "45", "date": "1984", "event": "Movimiento Pro Dignificación UAdeC", "type": "Movimiento universitario-laboral pendiente de archivo", "actors": "Comunidad universitaria; trabajadores universitarios", "why": "Aparece en registros bibliográficos dentro de movimientos sociales de Saltillo 1973-1984.", "impact": "Requiere hemeroteca y archivo universitario para precisar demandas, actores y consecuencias.", "source": "Pista bibliográfica. (The New York Public Library)", "era": 4}, {"n": "46", "date": "2007", "event": "Paros laborales en Estados Unidos afectan GM y Chrysler en corredor Saltillo-Ramos", "type": "Impacto laboral transnacional", "actors": "GM; Chrysler; trabajadores de Saltillo-Ramos; CTM/CROC", "why": "Conflictos laborales externos y dependencia de cadenas productivas internacionales.", "impact": "Trabajadores locales resienten crisis laborales decididas fuera de la región.", "source": "Referencia histórica. (Seducoahuila)", "era": 5}, {"n": "47", "date": "2012", "event": "Huelga en UAAAN", "type": "Huelga universitaria", "actors": "Trabajadores de la Narro; estudiantes de Saltillo y Torreón", "why": "Conflicto laboral universitario.", "impact": "Afectó a más de 5 mil estudiantes en Saltillo y Torreón.", "source": "Confirmado. (Jornada)", "era": 5}, {"n": "48", "date": "2015", "event": "Huelga de académicos en UAAAN simultánea con administrativos", "type": "Huelga universitaria", "actors": "SUTAUAAAN; SUTUAAAN; profesores; administrativos; autoridades", "why": "Aumento salarial, revisión contractual, violaciones al contrato colectivo, falta de diálogo.", "impact": "Afectó a más de 500 docentes; primera coincidencia de huelgas académica y administrativa.", "source": "Confirmado. (vanguardia.com.mx)", "era": 5}, {"n": "49", "date": "marzo de 2016", "event": "Posible emplazamiento a huelga de trabajadores municipales", "type": "Emplazamiento laboral", "actors": "Sindicato de trabajadores del municipio de Saltillo; Ayuntamiento", "why": "Tensión laboral municipal.", "impact": "Se reportó como posible primer emplazamiento en casi 30 años; falta confirmar si estalló.", "source": "Pista de prensa. (vanguardia.com.mx)", "era": 5}, {"n": "50", "date": "2017", "event": "Marchas de docentes y trabajadores de UAAAN", "type": "Movilización laboral universitaria", "actors": "Profesores de la Narro; trabajadores de educación; Sección 38; UAdeC solidaria", "why": "Reclamos laborales y universitarios.", "impact": "Mantiene a la Narro como foco laboral persistente.", "source": "Confirmado. (vanguardia.com.mx)", "era": 5}, {"n": "51", "date": "15 de febrero de 2019", "event": "Huelga en UAAAN", "type": "Huelga universitaria", "actors": "SUTUAAAN; autoridades universitarias; estudiantes", "why": "Conflicto contractual y salarial.", "impact": "Segunda huelga federal de la Agraria y primera durante el gobierno de AMLO, según prensa local.", "source": "Confirmado. (El Heraldo de Saltillo)", "era": 5}, {"n": "52", "date": "junio de 2019", "event": "Emplazamiento de huelga en UAdeC declarado improcedente", "type": "Conflicto legal sindical", "actors": "SUTUAC; UAdeC", "why": "Falta de acreditación de personalidad jurídica.", "impact": "Muestra que no todo malestar laboral logra convertirse en huelga legal.", "source": "Confirmado. (Grupo Milenio)", "era": 5}, {"n": "53", "date": "octubre de 2019", "event": "Paros técnicos en Adient Saltillo y GM Ramos por huelga UAW en EU", "type": "Paro técnico por cadena global", "actors": "Adient Saltillo; GM Ramos; trabajadores automotrices", "why": "Huelga de United Auto Workers contra GM en Estados Unidos.", "impact": "Trabajadores locales fueron afectados por conflicto externo.", "source": "Confirmado. (OEM)", "era": 5}, {"n": "54", "date": "1 de marzo de 2020", "event": "Suspensiones automotrices por pandemia", "type": "Paro productivo sanitario", "actors": "FCA/Stellantis; GM; Daimler; trabajadores Saltillo-Ramos", "why": "COVID-19 y suspensión de actividades industriales.", "impact": "Evidenció vulnerabilidad laboral ante crisis globales.", "source": "Confirmado. (vanguardia.com.mx)", "era": 5}, {"n": "55", "date": "1 de abril de 2021", "event": "Posible huelga / prórroga en CIQA", "type": "Emplazamiento laboral", "actors": "Trabajadores del Centro de Investigación en Química Aplicada", "why": "Retrasos y falta de respuesta institucional.", "impact": "Conflicto laboral científico-técnico poco visible.", "source": "Pista de prensa. (El Diario de Coahuila)", "era": 5}, {"n": "56", "date": "20-21 de julio de 2022", "event": "Paro y huelga de telefonistas Telmex en Saltillo", "type": "Paro / huelga nacional con expresión local", "actors": "STRM; trabajadores activos y jubilados de Telmex en Saltillo, Parras, Arteaga y zona cercana", "why": "Vacantes no cubiertas, respeto al contrato colectivo, jubilaciones y prestaciones.", "impact": "Se colocaron banderas rojinegras; servicios afectados; primera huelga Telmex en más de 30 años.", "source": "Confirmado. (vanguardia.com.mx)", "era": 5}, {"n": "57", "date": "2022", "event": "Paros técnicos automotrices por falta de chips", "type": "Paro técnico", "actors": "Plantas y proveedoras del sureste de Coahuila", "why": "Escasez de semiconductores.", "impact": "Reducción de producción, jornadas e ingresos negociados.", "source": "Confirmado. (El Heraldo de Saltillo)", "era": 5}, {"n": "58", "date": "1 de octubre de 2023", "event": "Protestas y paro del Poder Judicial Federal contra eliminación de fideicomisos", "type": "Paro / protesta laboral", "actors": "Trabajadores del PJF en Saltillo; STPJF", "why": "Defensa de fideicomisos, pensiones, vivienda, salud, seguridad social y retiro.", "impact": "En Coahuila se reportó suspensión de actividades y protestas de cientos de trabajadores.", "source": "Confirmado. (Grupo Milenio)", "era": 5}, {"n": "59", "date": "1 de marzo de 2024", "event": "Paro breve en UAAAN", "type": "Paro universitario", "actors": "Trabajadores de la Narro", "why": "Ciclo reciente de conflicto laboral.", "impact": "Forma parte de tres paros en cinco años: 2019, marzo de 2024 y agosto de 2024.", "source": "Confirmado por prensa local. (vanguardia.com.mx)", "era": 5}, {"n": "60", "date": "19 de agosto-septiembre de 2024", "event": "Paro y protestas del PJF contra reforma judicial", "type": "Paro / protesta laboral-política", "actors": "Trabajadores del Poder Judicial Federal en Saltillo, Torreón, Monclova y Piedras Negras", "why": "Rechazo a reforma judicial, defensa de carrera judicial y condiciones laborales.", "impact": "En Saltillo se afectaron órganos judiciales; alrededor de 400 trabajadores participaron.", "source": "Confirmado. (vanguardia.com.mx)", "era": 5}, {"n": "61", "date": "28 de agosto-14 de octubre de 2024", "event": "Huelga SUTUAAAN en UAAAN", "type": "Huelga universitaria", "actors": "SUTUAAAN; autoridades; alrededor de 906 trabajadores", "why": "Salarios caídos, revisión de condiciones laborales y rechazo a propuestas institucionales.", "impact": "Duró 48 días en Saltillo y Torreón; terminó con retiro de banderas rojinegras.", "source": "Confirmado. (vanguardia.com.mx)", "era": 5}, {"n": "62", "date": "Abril-mayo de 2025", "event": "Paro técnico GM Ramos Arizpe", "type": "Paro técnico automotriz", "actors": "GM Ramos; trabajadores sindicalizados; CTM", "why": "Incertidumbre arancelaria y ajustes productivos.", "impact": "Más de 3,500 trabajadores afectados con pago parcial. Impacto directo en zona Saltillo-Ramos.", "source": "Confirmado. (El País)", "era": 5}, {"n": "63", "date": "junio de 2025", "event": "Despidos y paros técnicos en automotriz y acero en Coahuila", "type": "Crisis laboral regional", "actors": "GM; industria automotriz; acero; CTM; trabajadores sindicalizados", "why": "Aranceles, relocalización productiva y crisis del acero.", "impact": "Miles de empleos afectados; negociación de paros técnicos para evitar más despidos.", "source": "Confirmado. (El País)", "era": 5}, {"n": "64", "date": "31 de julio de 2025", "event": "Contraforo por reducción de jornada laboral en Saltillo", "type": "Acción política-laboral", "actors": "Frente Nacional por las 40 Horas; estudiantes; trabajadores; activistas", "why": "Defensa de jornada de 40 horas.", "impact": "Movimiento laboral contemporáneo centrado en tiempo de vida, no solo salario.", "source": "Confirmado como acción local. (El Diario de Coahuila)", "era": 5}, {"n": "65", "date": "1 de agosto de 2025", "event": "Despidos en Daimler Truck Saltillo", "type": "Ajuste laboral industrial", "actors": "Daimler Truck Saltillo; Sección 23 del sindicato automotriz; 500 trabajadores", "why": "Baja de producción.", "impact": "Despido de 500 trabajadores; síntoma de vulnerabilidad industrial.", "source": "Confirmado. (Cluster Industrial)", "era": 5}, {"n": "66", "date": "1 de octubre de 2025 en adelante", "event": "Huelga nacional del Nacional Monte de Piedad con sucursales cerradas en Saltillo", "type": "Huelga nacional con impacto local", "actors": "Trabajadores sindicalizados; dos sucursales en Saltillo", "why": "Violaciones laborales, interpretación de acuerdos, vacantes asignadas sin participación sindical, contrato colectivo.", "impact": "Dos sucursales saltillenses cerradas con banderas rojinegras; la huelga seguía sin acuerdo definitivo hacia junio de 2026.", "source": "Confirmado. (Telediario México)", "era": 5}, {"n": "67", "date": "16 de octubre de 2025", "event": "Trabajadores del CIQA laboran bajo protesta", "type": "Protesta laboral", "actors": "Cerca de 300 trabajadores del CIQA en Saltillo", "why": "Pagos pendientes y desacuerdos laborales.", "impact": "Visibiliza precarización o retrasos en centros científico-técnicos.", "source": "Pista de prensa. (El Diario de Coahuila)", "era": 5}, {"n": "68", "date": "18 de diciembre de 2025", "event": "Paro y bloqueo de trabajadores del Instituto Tecnológico de Saltillo", "type": "Paro laboral / bloqueo vial", "actors": "Trabajadores del ITS; Delegación Sindical DB12; autoridades educativas", "why": "Falta de pago de salarios desde noviembre.", "impact": "Bloqueo de Venustiano Carranza durante cinco horas; liberación tras promesa de respuesta gubernamental.", "source": "Confirmado. (Capital Coahuila)", "era": 5}, {"n": "69", "date": "15 de febrero de 2026", "event": "Votación del SUTUAAAN para no estallar huelga y prorrogar", "type": "Emplazamiento / votación sindical", "actors": "SUTUAAAN; trabajadores de UAAAN", "why": "Conflicto salarial y contractual.", "impact": "La base votó mayoritariamente contra estallar huelga y prorrogó al 17 de abril.", "source": "Confirmado. (vanguardia.com.mx)", "era": 5}, {"n": "70", "date": "16 de febrero de 2026", "event": "Alerta de posible huelga en radio y televisión con impacto en Coahuila", "type": "Emplazamiento nacional sectorial", "actors": "CIRT Coahuila; sindicatos nacionales de radio y TV; trabajadores del sector", "why": "Salario, automatización, inteligencia artificial, jornada de 40 horas y regulación.", "impact": "Posible afectación a casi 100 estaciones/canales en Coahuila y unos 600 trabajadores.", "source": "Confirmado como alerta/emplazamiento. (El Coahuilense)", "era": 5}, {"n": "71", "date": "17 de febrero de 2026", "event": "Paro de recolectores de basura en Saltillo", "type": "Paro de servicios públicos", "actors": "Alrededor de 300 recolectores; Ayuntamiento; sindicato de Servicios Primarios", "why": "Mal estado de camiones, falta de herramientas y equipo de protección, salarios y quejas contra líderes sindicales.", "impact": "Afectó servicio urbano esencial; tras diálogo acordaron volver al día siguiente.", "source": "Confirmado. (El Coahuilense)", "era": 5}, {"n": "72", "date": "Abril-mayo de 2026", "event": "Emplazamiento nacional de Correos de México / Sepomex", "type": "Emplazamiento laboral nacional con posible impacto local", "actors": "Trabajadores sindicalizados de Correos", "why": "Falta de respuestas a demandas laborales.", "impact": "Requiere confirmar desenlace específico en Saltillo.", "source": "Pista nacional con posible expresión local. (El Diario de Coahuila)", "era": 5}, {"n": "73", "date": "Abril-junio de 2026", "event": "Nueva tensión de huelga en UAAAN", "type": "Emplazamiento / negociación", "actors": "SUTUAAAN; autoridades de la Narro; trabajadores con salarios bajos", "why": "Homologación salarial, trabajadores por debajo del salario mínimo, falta de fecha clara para aumentos.", "impact": "Mantiene a la Narro como uno de los polos laborales más conflictivos de Saltillo.", "source": "Confirmado. (Zócalo)", "era": 5}, {"n": "74", "date": "1 de junio de 2026", "event": "Bloqueos magisteriales en Saltillo", "type": "Paro / protesta laboral", "actors": "Secciones 5, 35 y 38 del SNTE; docentes; autoridades educativas", "why": "Salario, pensiones, Ley ISSSTE 2007, pago retroactivo, salud, reconocimiento laboral y jubilación digna.", "impact": "Bloqueo de vialidades principales durante unas siete horas; protestas simultáneas en otras ciudades de Coahuila.", "source": "Confirmado. (vanguardia.com.mx)", "era": 5}, {"n": "75", "date": "10 de junio de 2026", "event": "Nuevo paro / movilización docente tras mesa de trabajo", "type": "Protesta laboral magisterial", "actors": "Magisterio de Coahuila; secciones sindicales; autoridades educativas", "why": "Insatisfacción tras reunión con autoridades; reclamos por pensiones, salario, promoción y reconocimiento.", "impact": "Instala crisis de representación sindical y presión docente sostenida.", "source": "Confirmado. (vanguardia.com.mx)", "era": 5}, {"n": "76", "date": "2025-2026", "event": "Marchas y plantones de ex trabajadores de AHMSA hacia Saltillo", "type": "Movimiento obrero regional con destino capital", "actors": "Ex obreros de AHMSA; Gobierno de Coahuila; Congreso estatal", "why": "Exigencia de pagos, salarios y liquidaciones tras crisis de AHMSA.", "impact": "Saltillo funciona como escenario del poder estatal: la capital recibe demandas obreras regionales aunque el conflicto nazca fuera.", "source": "Pista de prensa/redes; requiere profundización. (Facebook)", "era": 5}]</script>
+
+
+<!-- ===========================================
+     SECCIÓN 10: LO QUE FALTA Y LO QUE SE EXIGE
+     =========================================== -->
+<section>
+  <div class="container">
+
+    <h2>No se trata de cerrar fábricas. Se trata de <span class="red">abrir futuros.</span></h2>
+
+    <div class="prose reveal">
+      <p>
+        Una ciudad adulta no debería conformarse con boletines. Una ciudadanía digna no debería limitarse a compartir indignación en redes. No basta el comentario ácido. No basta el hilo furioso. <strong>No basta decir "qué fuerte" y seguir bajando el dedo por la pantalla.</strong>
+      </p>
+      <p>
+        Radical no significa gritar más fuerte. Radical viene de raíz. Y aquí la raíz es simple: queremos saber si el modelo que se presume como futuro produce vida propia <em>o solo mantiene girando la rueda</em>.
+      </p>
+    </div>
+
+    <div class="demand-grid">
+      <div class="demand-card">
+        <span class="demand-num">01</span>
+        <span class="demand-tag">EMPLEO NETO</span>
+        Altas <strong style="color:var(--paper)">y bajas</strong>. Duración promedio de contratos. Salarios reales. Turnos. Horas extra. No solo el número anunciado.
+      </div>
+      <div class="demand-card">
+        <span class="demand-num">02</span>
+        <span class="demand-tag">RESULTADOS NOM-035</span>
+        Agregados, anónimos, públicos. ¿Cuántas empresas del clúster aplicaron la norma? ¿Cuántas fueron inspeccionadas? ¿Cuántas sancionadas?
+      </div>
+      <div class="demand-card">
+        <span class="demand-num">03</span>
+        <span class="demand-tag">PATENTES LOCALES</span>
+        Marcas locales. Diseño local. Software local. Servicios creativos exportables. ¿Cuántas nacen aquí? ¿Cuántas se quedan?
+      </div>
+      <div class="demand-card">
+        <span class="demand-num">04</span>
+        <span class="demand-tag">INCAPACIDADES</span>
+        Cifras de IMSS por ansiedad, depresión, trastornos del sueño y burnout en trabajadores de manufactura. Ahora opacas.
+      </div>
+      <div class="demand-card">
+        <span class="demand-num">05</span>
+        <span class="demand-tag">TIEMPO DE TRASLADO</span>
+        Tiempo promedio por colonia obrera. Antes y después de cada obra vial. Quién gana tiempo y quién lo pierde.
+      </div>
+      <div class="demand-card">
+        <span class="demand-num">06</span>
+        <span class="demand-tag">INVESTIGACIÓN APLICADA</span>
+        Empresas locales que nazcan aquí. No solo plantas que lleguen aquí. Conocimiento transferible, no solo personal capacitado.
+      </div>
+      <div class="demand-card">
+        <span class="demand-num">07</span>
+        <span class="demand-tag">ROTACIÓN REAL</span>
+        Tasa de rotación por planta. Causas de salida. Duración promedio de cada plaza. ¿Cuántos empleos son la misma silla rotando?
+      </div>
+      <div class="demand-card">
+        <span class="demand-num">08</span>
+        <span class="demand-tag">CULTURA MEDIBLE</span>
+        Cuenta satélite de economía creativa para Saltillo. Lo que no se mide no se financia. Lo que no se clasifica, no entra al portafolio.
+      </div>
+    </div>
+
+    <div class="prose reveal" style="margin-top: 4rem;">
+      <p style="font-family: var(--font-display); font-size: clamp(20px, 2.6vw, 32px); line-height: 1.1; text-transform: uppercase; color: var(--paper); max-width: 900px;">
+        La ciudad que <span style="color:var(--blood)">no inventa su futuro</span> termina rentando su cuerpo para producir el futuro de <span style="color:var(--blood)">alguien más</span>.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- BOTTOM TICKER -->
+<div class="ticker-bar">
+  <div class="ticker-track">
+    <span>¿CUÁNTAS PATENTES NACEN EN SALTILLO? · <strong>SIN DATOS PÚBLICOS LOCALES</strong></span>
+    <span>¿CUÁNTO SOFTWARE SE DISEÑA AQUÍ? · <strong>SIN DATOS PÚBLICOS LOCALES</strong></span>
+    <span>¿CUÁNTOS INVESTIGADORES SE QUEDAN? · <strong>SIN DATOS PÚBLICOS LOCALES</strong></span>
+    <span>¿CUÁNTOS JÓVENES SE IMAGINAN FUERA DE LA PLANTA? · <strong>SIN DATOS PÚBLICOS LOCALES</strong></span>
+    <span>¿CUÁNTAS MARCAS LOCALES ESCALAN? · <strong>SIN DATOS PÚBLICOS LOCALES</strong></span>
+    <span>¿CUÁNTAS INCAPACIDADES POR BURNOUT? · <strong>SIN DATOS PÚBLICOS LOCALES</strong></span>
+    <span>¿CUÁNTAS PATENTES NACEN EN SALTILLO? · <strong>SIN DATOS PÚBLICOS LOCALES</strong></span>
+    <span>¿CUÁNTO SOFTWARE SE DISEÑA AQUÍ? · <strong>SIN DATOS PÚBLICOS LOCALES</strong></span>
+    <span>¿CUÁNTOS INVESTIGADORES SE QUEDAN? · <strong>SIN DATOS PÚBLICOS LOCALES</strong></span>
+  </div>
+</div>
+
+<!-- CLOSING SECTION -->
+<section style="background: var(--paper); color: var(--ink); text-align: center; padding: 10rem 2rem;">
+  <div class="container">
+    <p style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.4em; color: var(--blood); text-transform: uppercase; margin-bottom: 3rem;">— CIERRE —</p>
+    <h2 style="color: var(--ink); margin-bottom: 3rem; max-width: 1100px; margin-left: auto; margin-right: auto;">
+      Saltillo, hasta hoy, sigue caminando hacia la fábrica como si <span class="red">no hubiera otro amanecer posible.</span>
+    </h2>
+    <p style="font-family: var(--font-mono); font-size: 14px; line-height: 1.8; color: var(--mute); max-width: 600px; margin: 0 auto;">
+      Pero a estas alturas la cortesía es una forma menor de putrefacción.<br>
+      <strong style="color: var(--ink);">Esto que sigue caminando, ¿está vivo o solo fue reanimado para seguir trabajando?</strong>
+    </p>
+  </div>
+</section>
+
+<!-- ===========================================
+     SECCIÓN 09: MÉTODO Y ARCHIVO
+     Fuentes organizadas en acordeones expandibles
+     =========================================== -->
+<section class="method" id="method">
+  <div class="container">
+
+    <h2>Cómo se construyó este <span class="red">archivo.</span></h2>
+
+    <div class="prose reveal">
+      <p>
+        Este ensayo se elaboró cruzando documentos internos de investigación, bases públicas, estudios académicos, fuentes normativas, notas periodísticas verificables y materiales históricos de archivo. Las fuentes se usaron con funciones distintas: algunas dieron el punto de partida narrativo, otras aportaron datos económicos, laborales o normativos, y otras permitieron contextualizar la relación entre trabajo, industria, jornada y desgaste en Saltillo y Coahuila a lo largo de cinco siglos.
+      </p>
+      <p>
+        El criterio de uso fue conservador: <strong>las fuentes sostienen datos, contexto y preguntas de investigación</strong>; no atribuyen responsabilidades individuales sin respaldo documental suficiente. Donde una afirmación pudo derivar en lectura causal indebida —especialmente en el cruce industria/salud mental— se optó por advertir explícitamente, no por insinuar.
+      </p>
+    </div>
+
+    <!-- Stats grid de categorías -->
+    <div class="method-stats reveal">
+      <div class="method-stat"><div class="n">11</div><div class="l">fuentes públicas verificables</div></div>
+      <div class="method-stat"><div class="n">76</div><div class="l">estaciones de archivo</div></div>
+      <div class="method-stat"><div class="n">12+</div><div class="l">medios periodísticos contrastados</div></div>
+      <div class="method-stat"><div class="n">2</div><div class="l">documentos rectores internos</div></div>
+    </div>
+
+    <!-- Acordeones de fuentes -->
+    <div class="archive-list">
+
+      <details class="archive-item">
+        <summary>
+          <span class="arrow">▸</span>
+          <span class="code">/ 01</span>
+          <span class="label">Documentos base</span>
+          <span class="count">02 ítems</span>
+        </summary>
+        <div class="archive-body">
+          <p>Documentos internos que funcionaron como punto de partida editorial y matriz de evidencia del ensayo.</p>
+          <ul>
+            <li><span><strong>La maquinaria del desvelo</strong> — Informe interno de investigación. De ahí se retomaron el diagnóstico editorial, la tesis consolidada, los ejes narrativos, las cautelas de precisión, la noción de <em>jornada fantasma</em>, la matriz de evidencia y las preguntas de transparencia dirigidas a empresas, cámaras y autoridades.</span></li>
+            <li><span><strong>Zombies de la maquila / La maquinaria del desvelo</strong> — Borrador original. Punto de partida narrativo para la atmósfera nocturna del texto, la crítica al llamado <em>milagro industrial</em>, la tensión productividad/desgaste psíquico y la recuperación del ángulo como metáfora crítica del sistema, no descalificación de las personas trabajadoras.</span></li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="archive-item">
+        <summary>
+          <span class="arrow">▸</span>
+          <span class="code">/ 02</span>
+          <span class="label">Economía e industria</span>
+          <span class="count">02 ítems</span>
+        </summary>
+        <div class="archive-body">
+          <p>Cifras de exportación automotriz e inversión industrial en el corredor Saltillo–Ramos Arizpe–Derramadero.</p>
+          <ul>
+            <li>
+              <span>
+                <span class="src-tag">Data México · SE</span><strong>Coahuila, 1ª entidad en exportaciones de partes y accesorios de vehículos automotores (2024): 6 mil 434 millones de dólares.</strong>
+                <br><a href="https://www.economia.gob.mx/datamexico/es/profile/product/parts-and-accessories-of-motor-vehicles" target="_blank" rel="noopener">economia.gob.mx/datamexico</a>
+              </span>
+            </li>
+            <li>
+              <span>
+                <span class="src-tag">CIAC · Cluster Industrial</span><strong>Inversión automotriz en Coahuila enero–septiembre 2025:</strong> 227.44 mdd · 14 proyectos · 3,208 empleos · 141 mil m² de construcción.
+                <br><a href="https://ciac.mx/nota-principal/el-corredor-saltillo-ramos-arizpe-derramadero-por-que-coahuila-lidera-la-nueva-era-automotriz-en-mexico/" target="_blank" rel="noopener">ciac.mx</a>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="archive-item">
+        <summary>
+          <span class="arrow">▸</span>
+          <span class="code">/ 03</span>
+          <span class="label">Salud, trabajo y riesgo psicosocial</span>
+          <span class="count">04 ítems</span>
+        </summary>
+        <div class="archive-body">
+          <p>Estudios académicos y marco internacional sobre desgaste psicosocial, calidad de sueño y salud mental en entornos industriales.</p>
+          <ul>
+            <li>
+              <span>
+                <span class="src-tag">Estudio · Ramos Arizpe</span><strong>82.45%</strong> de trabajadores evaluados con dificultades graves en al menos 2 áreas o moderadas en más de 3 áreas del Índice de Calidad de Sueño de Pittsburgh.
+                <br><a href="https://ojs.eumed.net/rev/index.php/rilcoDS/article/view/14053bdh/053htm" target="_blank" rel="noopener">ojs.eumed.net</a>
+              </span>
+            </li>
+            <li>
+              <span>
+                <span class="src-tag">Estudio · Saltillo</span>Riesgos psicosociales en operadores de producción: el <strong>ritmo de trabajo</strong> fue la dimensión más afectada (<strong>79.5%</strong> desfavorable para la salud), seguida del apoyo social de compañeros (<strong>56.8%</strong>).
+                <br><a href="https://revistamedica.com/doi-prevalencia-riesgos-psicosociales-operadores/" target="_blank" rel="noopener">revistamedica.com</a>
+              </span>
+            </li>
+            <li>
+              <span>
+                <span class="src-tag">OMS</span>Salud mental en el trabajo: cargas y ritmos excesivos, horarios prolongados, antisociales o inflexibles y la falta de control sobre la carga laboral pueden constituir riesgos para la salud mental.
+                <br><a href="https://www.who.int/es/news-room/fact-sheets/detail/mental-health-at-work" target="_blank" rel="noopener">who.int</a>
+              </span>
+            </li>
+            <li>
+              <span>
+                <span class="src-tag">STPS · Trabajo Seguro</span>Boletín oficial sobre trastornos del sueño y ciclo sueño-vigilia en el ámbito laboral.
+                <br><a href="https://trabajoseguro.stps.gob.mx/bol088/vinculos/notas_3.html" target="_blank" rel="noopener">trabajoseguro.stps.gob.mx</a>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="archive-item">
+        <summary>
+          <span class="arrow">▸</span>
+          <span class="code">/ 04</span>
+          <span class="label">Marco normativo</span>
+          <span class="count">02 ítems</span>
+        </summary>
+        <div class="archive-body">
+          <p>Obligaciones legales que los centros de trabajo en México tienen sobre riesgo psicosocial y reconocimiento de enfermedades del trabajo.</p>
+          <ul>
+            <li>
+              <span>
+                <span class="src-tag">NOM-035-STPS-2018</span>Obligación de identificación, análisis y prevención de factores de riesgo psicosocial y promoción de un entorno organizacional favorable.
+                <br><a href="https://asinom.stps.gob.mx/upload/nom/48.pdf" target="_blank" rel="noopener">asinom.stps.gob.mx</a>
+              </span>
+            </li>
+            <li>
+              <span>
+                <span class="src-tag">LFT · Tabla de Enfermedades</span>Reforma 2023 y actualización de la Tabla de Enfermedades de Trabajo: los trastornos no orgánicos del ciclo sueño-vigilia ya aparecen reconocidos.
+                <br><a href="https://www.diputados.gob.mx/LeyesBiblio/ref/lft/LFT_ref43_04dic23.pdf" target="_blank" rel="noopener">diputados.gob.mx</a>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="archive-item">
+        <summary>
+          <span class="arrow">▸</span>
+          <span class="code">/ 05</span>
+          <span class="label">Género, uso del tiempo y jornada</span>
+          <span class="count">02 ítems</span>
+        </summary>
+        <div class="archive-body">
+          <p>Datos que permiten cruzar el desgaste laboral con la doble jornada, el tiempo no remunerado y la carga distribuida de los cuidados.</p>
+          <ul>
+            <li>
+              <span>
+                <span class="src-tag">INEGI · ENUT 2024</span>Las <strong>mujeres dedicaron 39.7 horas semanales</strong> al trabajo doméstico, de cuidados y voluntario, frente a <strong>18.2 horas</strong> de los hombres.
+                <br><a href="https://inegi.org.mx/contenidos/saladeprensa/boletines/2025/enut/enut2024_CP.pdf" target="_blank" rel="noopener">inegi.org.mx</a>
+              </span>
+            </li>
+            <li>
+              <span>
+                <span class="src-tag">Vanguardia · IMCO 2026</span><strong>25.5%</strong> de las personas trabajadoras de la Zona Metropolitana de Saltillo labora más de <strong>48 horas a la semana</strong>.
+                <br><a href="https://vanguardia.com.mx/coahuila/saltillo/saltillo-1-de-cada-4-personas-trabaja-horas-extra-influye-en-estres-y-salud-mental-considera-experta-FB21201657" target="_blank" rel="noopener">vanguardia.com.mx</a>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </details>
+
+      <details class="archive-item">
+        <summary>
+          <span class="arrow">▸</span>
+          <span class="code">/ 06</span>
+          <span class="label">Archivo histórico colonial y siglos XVII–XX</span>
+          <span class="count">Gazeta · AMS · bibliografía</span>
+        </summary>
+        <div class="archive-body">
+          <p>Base documental de las primeras 45 estaciones de la cronología anti-zombi (sección 07). Fondos consultados del <strong>Archivo Municipal de Saltillo</strong> y <strong>La Gazeta del Saltillo</strong>: Presidencia Municipal, Testamentos, Protocolos, Tierras y Aguas, Propios, Arbitrios y Cuentas, Decretos y Circulares, Jefatura Política, Registro de Ejecutorias, Hemeroteca, Actas de Cabildo, Registro de Partidos y Clubes Políticos, Registro de Fierros y Señales de Sangre, Panteón San Esteban, sacerdotes, policía y jueces auxiliares.</p>
+          <p><strong>Bibliografía especializada consultada:</strong></p>
+          <ul>
+            <li><span>Carlos Manuel Valdés e Ildefonso Dávila — <em>Esclavos negros en Saltillo. Siglos XVII a XIX</em></span></li>
+            <li><span>José Cuello — <em>El norte, el noreste y Saltillo en la historia colonial de México</em></span></li>
+            <li><span>David B. Adams — <em>Las colonias tlaxcaltecas de Coahuila y Nuevo León</em></span></li>
+            <li><span>María da Gloria Marroni — <em>Los orígenes de la sociedad industrial en Coahuila</em></span></li>
+            <li><span>Martha Durón Jiménez — <em>Biografías inconclusas</em></span></li>
+            <li><span>Catálogos del fondo editorial del Archivo Municipal: <em>Catálogo del Fondo Presidencia Municipal</em>, <em>Catálogo del Fondo Jefatura Política</em>, <em>Catálogo del Fondo Protocolos</em></span></li>
+          </ul>
+          <p style="margin-top:1rem;">Estudios académicos complementarios sobre encomienda, esclavitud indígena, San Esteban de Nueva Tlaxcala, milicias tlaxcaltecas, mutualismo artesanal, sociedades obreras, industrialización textil y sindicalismo mexicano.</p>
+        </div>
+      </details>
+
+      <details class="archive-item">
+        <summary>
+          <span class="arrow">▸</span>
+          <span class="code">/ 07</span>
+          <span class="label">Prensa contemporánea y fuentes institucionales</span>
+          <span class="count">31 estaciones · era V</span>
+        </summary>
+        <div class="archive-body">
+          <p>Base para los 31 conflictos contemporáneos de la cronología (era V · 2000–2026). Contrastes cruzados entre prensa local, nacional y registros sindicales.</p>
+          <p><strong>Medios revisados:</strong></p>
+          <ul>
+            <li><span>Vanguardia · El Heraldo de Saltillo · El Coahuilense · Zócalo · Diario de Coahuila · Capital Coahuila · Infonor</span></li>
+            <li><span>La Jornada · Milenio · Proceso · El País · Telediario</span></li>
+            <li><span>OEM · Cluster Industrial · Memoria Política de México</span></li>
+          </ul>
+          <p style="margin-top:1rem;"><strong>Fuentes institucionales y sindicales rastreadas:</strong></p>
+          <ul>
+            <li><span>Cinsa-Cifunsa · GIS · CTM · FAT · CROM</span></li>
+            <li><span>UAAAN (SUTAUAAAN · SUTUAAAN) · UAdeC (SUTUAC)</span></li>
+            <li><span>Telmex (STRM) · Poder Judicial Federal (STPJF)</span></li>
+            <li><span>Magisterio (Secciones 5, 35 y 38 del SNTE)</span></li>
+            <li><span>CIQA · Instituto Tecnológico de Saltillo (Delegación DB12)</span></li>
+            <li><span>Nacional Monte de Piedad · Correos de México · CIRT Coahuila</span></li>
+            <li><span>AHMSA · Daimler Truck · GM Ramos Arizpe · Adient · Stellantis</span></li>
+            <li><span>Servicios Primarios del Ayuntamiento de Saltillo</span></li>
+          </ul>
+        </div>
+      </details>
+
+    </div>
+
+    <!-- Salvedad final -->
+    <div class="method-warning reveal">
+      <div class="head">◆ Nota crítica · uso responsable de fuentes</div>
+      <p>
+        Las fuentes históricas y archivísticas se utilizaron para sostener antecedentes y contexto, no para juzgar en retrospectiva. Los conflictos contemporáneos se contrastaron, en la medida de lo posible, con prensa verificable, registros sindicales y documentos públicos. En el cruce industria/salud mental se rechazó deliberadamente cualquier afirmación causal: <strong>no puede afirmarse que la industria cause suicidios, depresión o burnout en lo individual</strong>. Lo que sí puede sostenerse —y este ensayo sostiene— es que los marcos normativos (NOM-035, LFT) y los estudios locales señalan condiciones de riesgo psicosocial que merecen escrutinio público, no opacidad.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="foot-brand">
+      <span style="color: var(--warn);">VANGUARDIA</span><br>
+      <span style="color: var(--paper);">IA LAB</span>
+      <span class="small">Zombis de Maquila · Narración experimental</span>
+    </div>
+    <div class="foot-col foot-credit">
+      <h5>Crédito</h5>
+      <p>
+        Ensayo, idea, narrativa y vibe coding:<br>
+        <a href="https://vanguardia.com.mx/autor/-/meta/cesar-gaytan" target="_blank" rel="noopener"><strong>César Gaytán</strong></a>.
+      </p>
+      <p class="foot-aux">
+        Fuentes, archivo y metodología detalladas en la sección <a href="#method">/ Método y Archivo</a>.
+      </p>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <div>© 2026 · <span style="color: var(--warn);">VANGUARDIA</span> IA LAB · SALTILLO, COAHUILA</div>
+    <div>LECTURA RECOMENDADA: 12 MIN</div>
+  </div>
+</footer>
+
+<script>
+'use strict';
+
+/* ============================================
+   2. CUSTOM CURSOR
+   ============================================ */
+(function() {
+  if (window.matchMedia('(hover: none)').matches) return;
+
+  const cursor = document.getElementById('cursor');
+  const trail = document.getElementById('cursorTrail');
+  let mx = 0, my = 0, tx = 0, ty = 0;
+
+  document.addEventListener('mousemove', (e) => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.transform = `translate(${mx}px, ${my}px) translate(-50%, -50%)`;
+  });
+
+  function follow() {
+    tx += (mx - tx) * 0.15;
+    ty += (my - ty) * 0.15;
+    trail.style.transform = `translate(${tx}px, ${ty}px) translate(-50%, -50%)`;
+    requestAnimationFrame(follow);
+  }
+  follow();
+
+  // Cursor expand on interactive
+  document.querySelectorAll('button, a, .stat-cell, .demand-card').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.classList.add('expand'));
+    el.addEventListener('mouseleave', () => cursor.classList.remove('expand'));
+  });
+})();
+
+/* ============================================
+   3. HERO WALKERS — siluetas caminando
+   ============================================ */
+(function() {
+  const c = document.getElementById('walkers');
+  if (!c) return;
+  const count = window.innerWidth < 768 ? 6 : 14;
+  for (let i = 0; i < count; i++) {
+    const w = document.createElement('div');
+    w.className = 'walker';
+    w.style.setProperty('--dur', (12 + Math.random() * 18) + 's');
+    w.style.animationDelay = -(Math.random() * 20) + 's';
+    w.style.bottom = (Math.random() * 40) + 'px';
+    w.style.opacity = (0.15 + Math.random() * 0.4);
+    w.style.transform = `scale(${0.5 + Math.random() * 0.8})`;
+    c.appendChild(w);
+  }
+})();
+
+/* ============================================
+   4. REVEAL ON SCROLL
+   ============================================ */
+(function() {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+  document.querySelectorAll('.reveal, .prose, h2, .stat-cell, .bar-row, .timeline, .demand-card, .manifesto-list li')
+    .forEach(el => { el.classList.add('reveal'); io.observe(el); });
+})();
+
+/* ============================================
+   5. SLOT COUNTERS (Terminal Industries-style)
+   ============================================ */
+(function() {
+  document.querySelectorAll('.slot-counter').forEach(el => {
+    const targetStr = el.dataset.target || el.textContent;
+    el.textContent = '';
+    el.dataset.value = targetStr;
+
+    // Build digit columns
+    [...targetStr].forEach(ch => {
+      if (/[0-9]/.test(ch)) {
+        const col = document.createElement('span');
+        col.className = 'slot-digit';
+        col.dataset.target = ch;
+        for (let i = 0; i <= 9; i++) {
+          const d = document.createElement('span');
+          d.textContent = i;
+          col.appendChild(d);
+        }
+        el.appendChild(col);
+      } else {
+        const sep = document.createElement('span');
+        sep.textContent = ch;
+        sep.style.display = 'inline-block';
+        el.appendChild(sep);
+      }
+    });
+  });
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const cols = e.target.querySelectorAll('.slot-digit');
+        cols.forEach((col, idx) => {
+          const target = parseInt(col.dataset.target, 10);
+          setTimeout(() => {
+            col.style.transform = `translateY(-${target}em)`;
+          }, idx * 80 + 200);
+        });
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.4 });
+
+  document.querySelectorAll('.slot-counter').forEach(el => io.observe(el));
+})();
+
+/* ============================================
+   6. BAR CHART ANIMATION
+   ============================================ */
+(function() {
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const bar = e.target.querySelector('.bar-fill');
+        if (bar) {
+          setTimeout(() => {
+            bar.style.width = bar.dataset.w + '%';
+          }, 200);
+        }
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('.bar-row').forEach(el => io.observe(el));
+})();
+
+/* ============================================
+   7. HUD PROGRESS
+   ============================================ */
+(function() {
+  const fill = document.getElementById('progressLine');
+  if (!fill) return;
+  window.addEventListener('scroll', () => {
+    const scrolled = window.scrollY;
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = total > 0 ? (scrolled / total) * 100 : 0;
+    fill.style.width = Math.min(100, pct) + '%';
+  }, { passive: true });
+})();
+
+/* ============================================
+   8. SCROLLYTELLING — la jornada fantasma
+   ============================================ */
+(function() {
+  const steps = document.querySelectorAll('.scrolly-step');
+  const fig = document.getElementById('scrollyFigure');
+  const lab = document.getElementById('scrollyLabel');
+  if (!steps.length || !fig) return;
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting && e.intersectionRatio > 0.5) {
+        steps.forEach(s => s.classList.remove('active'));
+        e.target.classList.add('active');
+        const f = e.target.dataset.fig;
+        const l = e.target.dataset.label;
+        if (f) {
+          fig.style.opacity = '0';
+          fig.style.transform = 'translateY(20px)';
+          setTimeout(() => {
+            fig.textContent = f;
+            lab.textContent = l;
+            fig.style.opacity = '1';
+            fig.style.transform = 'translateY(0)';
+          }, 200);
+        }
+      }
+    });
+  }, { threshold: [0.5], rootMargin: '-30% 0px -30% 0px' });
+
+  fig.style.transition = 'opacity 0.4s, transform 0.4s';
+  steps.forEach(s => io.observe(s));
+})();
+
+/* ============================================
+   9. REFUSE COUNTER (localStorage + simulated count)
+   ============================================ */
+(function() {
+  const btn = document.getElementById('refuseBtn');
+  const countEl = document.getElementById('refuseCount');
+  const subEl = document.getElementById('refuseSub');
+  const overlay = document.getElementById('pauseOverlay');
+  const timeEl = document.getElementById('pauseTime');
+  const skipBtn = document.getElementById('pauseSkip');
+  if (!btn) return;
+
+  // Simulated growing baseline + local commitment
+  const STORAGE_KEY = 'zombi_refused_v1';
+  const COUNT_KEY = 'zombi_global_count_v1';
+  const SEED = 1247; // starting baseline
+  const startDate = new Date('2026-06-15').getTime();
+
+  function getCount() {
+    // Pseudo-realistic: SEED + days since launch * 3-7
+    const days = Math.floor((Date.now() - startDate) / 86400000);
+    const stored = parseInt(localStorage.getItem(COUNT_KEY) || '0', 10);
+    const myAdd = localStorage.getItem(STORAGE_KEY) ? 1 : 0;
+    return SEED + Math.max(0, days) * 5 + stored + myAdd;
+  }
+
+  function animateCount(from, to, duration = 1500) {
+    const start = performance.now();
+    function tick(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const val = Math.round(from + (to - from) * eased);
+      countEl.textContent = val.toLocaleString('es-MX');
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // Init
+  const initial = getCount();
+  countEl.textContent = '0';
+
+  const initIO = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        animateCount(0, initial, 2000);
+        initIO.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  initIO.observe(countEl);
+
+  if (localStorage.getItem(STORAGE_KEY)) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="refuse-button-inner">✓ TE REHUSASTE</span>';
+    subEl.textContent = 'GRACIAS POR PAUSAR LA RUEDA';
+  }
+
+  // Pause overlay logic
+  let pauseTimer = null;
+  let countdown = 8;
+  let earlyExit = false;
+
+  function startPause() {
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    countdown = 8;
+    earlyExit = false;
+    timeEl.textContent = '08';
+
+    pauseTimer = setInterval(() => {
+      countdown--;
+      timeEl.textContent = String(countdown).padStart(2, '0');
+      if (countdown <= 0 || earlyExit) {
+        clearInterval(pauseTimer);
+        endPause();
+      }
+    }, 1000);
+  }
+
+  function endPause() {
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  btn.addEventListener('click', () => {
+    if (btn.disabled) return;
+
+    // Increment local + global
+    const before = getCount();
+    localStorage.setItem(STORAGE_KEY, '1');
+    const stored = parseInt(localStorage.getItem(COUNT_KEY) || '0', 10);
+    localStorage.setItem(COUNT_KEY, String(stored + 1));
+    const after = getCount();
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="refuse-button-inner">✓ TE REHUSASTE</span>';
+    subEl.textContent = 'GRACIAS POR PAUSAR LA RUEDA';
+
+    animateCount(before, after, 1200);
+
+    setTimeout(() => startPause(), 600);
+  });
+
+  skipBtn.addEventListener('click', () => {
+    earlyExit = true;
+    endPause();
+  });
+
+  // Escape closes after 5s
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay.classList.contains('active') && countdown < 4) {
+      earlyExit = true;
+      endPause();
+    }
+  });
+})();
+
+/* ============================================
+   10. STAT CARD GLITCH ON HOVER
+   ============================================ */
+(function() {
+  if (window.matchMedia('(hover: none)').matches) return;
+  document.querySelectorAll('.stat-cell').forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      const slot = card.querySelector('.slot-counter');
+      if (!slot) return;
+      const cols = slot.querySelectorAll('.slot-digit');
+      cols.forEach(col => {
+        const original = parseInt(col.dataset.target, 10);
+        let count = 0;
+        const iv = setInterval(() => {
+          const rand = Math.floor(Math.random() * 10);
+          col.style.transition = 'none';
+          col.style.transform = `translateY(-${rand}em)`;
+          count++;
+          if (count > 5) {
+            clearInterval(iv);
+            col.style.transition = '';
+            col.style.transform = `translateY(-${original}em)`;
+          }
+        }, 50);
+      });
+    });
+  });
+})();
+
+/* ============================================
+   11. RED FLAGS TEST (zombificación silenciosa)
+   ============================================ */
+(function() {
+  const flags = document.querySelectorAll('.rflag');
+  const fill = document.getElementById('rfFill');
+  const pctEl = document.getElementById('rfPct');
+  const countEl = document.getElementById('rfCount');
+  const resultPct = document.getElementById('rfresultPct');
+  const resultTier = document.getElementById('rfresultTier');
+  const resultDiag = document.getElementById('rfresultDiag');
+  const shareBtn = document.getElementById('rfShareBtn');
+  const resetBtn = document.getElementById('rfResetBtn');
+  const shareText = document.getElementById('rfShareText');
+  const copiedTag = document.getElementById('rfCopied');
+  if (!flags.length) return;
+
+  const STORAGE = 'zombi_rflags_v1';
+  const saved = JSON.parse(localStorage.getItem(STORAGE) || '[]');
+
+  // Restore state
+  saved.forEach(id => {
+    const f = document.querySelector(`.rflag[data-flag="${id}"]`);
+    if (f) { f.classList.add('on'); f.setAttribute('aria-checked', 'true'); }
+  });
+
+  function tierFor(pct) {
+    if (pct === 0) return {
+      tier: 'SIN DATOS',
+      diag: 'Marca las red flags que aplican a tu vida laboral. El resultado aparecerá aquí.',
+      color: '#5a5446'
+    };
+    if (pct <= 16) return {
+      tier: 'LIBRE — POR AHORA',
+      diag: '<strong>Pocas señales.</strong> Trabajas, pero el sistema todavía no te ha disuelto el carácter. Disfrútalo, defiéndelo. Esta condición no es permanente: es una victoria política frágil que conviene proteger.',
+      color: '#ff6600'
+    };
+    if (pct <= 36) return {
+      tier: 'INFECTADO LEVE',
+      diag: '<strong>Hay grietas.</strong> Algunas red flags ya forman parte de tu paisaje cotidiano. Todavía las reconoces como anomalías — eso ya es mucho. El problema empieza cuando dejan de sorprenderte.',
+      color: '#ff6600'
+    };
+    if (pct <= 60) return {
+      tier: 'OPERATIVO',
+      diag: '<strong>La rueda ya gira en tu cabeza.</strong> Funcionas con cansancio crónico, te sientes culpable al descansar y normalizas lo que hace dos años te habría parecido inaceptable. Felicidades: el sistema te entrenó. Pero todavía hay quien lee esto. Aún hay alguien adentro.',
+      color: '#c8201c'
+    };
+    if (pct <= 84) return {
+      tier: 'ZOMBI FUNCIONAL',
+      diag: '<strong>Te zombificaron sin avisarte.</strong> No es debilidad ni mala suerte: es una estructura laboral que aprendió a extraerte valor sin pedir permiso. La buena noticia es que reconocerlo es la única ruta de salida. La mala es que el sistema cuenta con que sigas leyéndolo como anécdota.',
+      color: '#c8201c'
+    };
+    return {
+      tier: 'MAQUILA TOTAL',
+      diag: '<strong>Ya no hay distancia entre tú y la línea de producción.</strong> Lo que llamas vida personal es la jornada fantasma del turno. Esto no es un diagnóstico para deprimirte: es un mapa. Empieza por exigir lo que la NOM-035 ya te debe. Tu cuerpo lleva años diciéndolo en silencio.',
+      color: '#c8201c'
+    };
+  }
+
+  function update(animate = true) {
+    const checked = document.querySelectorAll('.rflag.on');
+    const count = checked.length;
+    const pct = count * 4;
+
+    fill.style.width = pct + '%';
+    pctEl.textContent = pct + '%';
+    countEl.textContent = count;
+
+    // gauge color shift
+    if (pct >= 60) {
+      pctEl.style.color = '#c8201c';
+    } else if (pct >= 25) {
+      pctEl.style.color = '#ff6600';
+    } else {
+      pctEl.style.color = '#ebe5d6';
+    }
+
+    const tier = tierFor(pct);
+    resultTier.textContent = tier.tier;
+    resultDiag.innerHTML = tier.diag;
+
+    // Animated count up for result number
+    if (animate) {
+      const current = parseInt(resultPct.textContent, 10) || 0;
+      animateNum(current, pct, resultPct);
+    } else {
+      resultPct.textContent = pct + '%';
+    }
+
+    // persist
+    const ids = Array.from(checked).map(f => f.dataset.flag);
+    localStorage.setItem(STORAGE, JSON.stringify(ids));
+
+    // hide share text if changed
+    shareText.classList.remove('visible');
+  }
+
+  function animateNum(from, to, el) {
+    const start = performance.now();
+    const dur = 600;
+    function tick(now) {
+      const p = Math.min((now - start) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(from + (to - from) * eased) + '%';
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function toggleFlag(flag) {
+    flag.classList.toggle('on');
+    const on = flag.classList.contains('on');
+    flag.setAttribute('aria-checked', on ? 'true' : 'false');
+    update();
+  }
+
+  flags.forEach(f => {
+    f.addEventListener('click', () => toggleFlag(f));
+    f.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        toggleFlag(f);
+      }
+    });
+  });
+
+  // Share
+  shareBtn.addEventListener('click', () => {
+    const count = document.querySelectorAll('.rflag.on').length;
+    const pct = count * 4;
+    const tier = tierFor(pct);
+    const url = window.location.href.split('#')[0];
+
+    const text = `🧟 ZOMBIFICACIÓN SILENCIOSA: ${pct}%
+${tier.tier}
+
+Marqué ${count} de 25 red flags en el test "¿Te zombificaron sin darte cuenta?" de Vanguardia IA Lab.
+
+"El zombi no es el trabajador. El zombi es el sistema que aprendió a mantener encendida la producción incluso cuando apaga la vida."
+
+Haz tu propio diagnóstico:
+${url}#rftest
+
+#ZombisDeMaquila #Saltillo #Coahuila`;
+
+    shareText.textContent = text;
+    shareText.classList.add('visible');
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        copiedTag.classList.add('show');
+        setTimeout(() => copiedTag.classList.remove('show'), 2500);
+      }).catch(() => {
+        // fallback: select for manual copy
+        selectShareText();
+      });
+    } else {
+      selectShareText();
+    }
+  });
+
+  function selectShareText() {
+    const range = document.createRange();
+    range.selectNodeContents(shareText);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  // Reset
+  resetBtn.addEventListener('click', () => {
+    flags.forEach(f => {
+      f.classList.remove('on');
+      f.setAttribute('aria-checked', 'false');
+    });
+    localStorage.removeItem(STORAGE);
+    update();
+    shareText.classList.remove('visible');
+  });
+
+  // Initial
+  update(false);
+})();
+
+/* ============================================
+   12. OBSERVATORIO DE RESISTENCIAS
+   ============================================ */
+(function() {
+  const dataEl = document.getElementById('resistData');
+  if (!dataEl) return;
+
+  let events;
+  try {
+    events = JSON.parse(dataEl.textContent);
+  } catch (e) {
+    console.error('Error parsing resist data', e);
+    return;
+  }
+
+  const ERAS = {
+    1: { code: 'I',   name: 'COLONIA',                      start: 1580, end: 1810 },
+    2: { code: 'II',  name: 'INDEPENDENCIA · REFORMA',      start: 1810, end: 1880 },
+    3: { code: 'III', name: 'PORFIRIATO · REVOLUCIÓN',      start: 1880, end: 1940 },
+    4: { code: 'IV',  name: 'MÉXICO INDUSTRIAL',            start: 1940, end: 2000 },
+    5: { code: 'V',   name: 'NEARSHORING · HOY',            start: 2000, end: 2026 }
+  };
+
+  const rail = document.getElementById('resistRail');
+  const card = document.getElementById('resistCard');
+  const idxEl = document.getElementById('resistIdx');
+  const totalEl = document.getElementById('resistTotal');
+  const eraTagEl = document.getElementById('resistEraTag');
+  const dateEl = document.getElementById('resistDate');
+  const eventEl = document.getElementById('resistEvent');
+  const typeEl = document.getElementById('resistType');
+  const actorsEl = document.getElementById('resistActors');
+  const whyEl = document.getElementById('resistWhy');
+  const impactEl = document.getElementById('resistImpact');
+  const sourceEl = document.getElementById('resistSource');
+  const progEl = document.getElementById('resistProgress');
+  const prevBtn = document.getElementById('resistPrev');
+  const nextBtn = document.getElementById('resistNext');
+  const erasContainer = document.getElementById('resistEras');
+
+  if (!rail || !card) return;
+
+  let currentIdx = 0;
+  let filterEra = 'all';
+  let visibleEvents = events.slice();
+
+  totalEl.textContent = events.length;
+
+  // ---------- BUILD RAIL ----------
+  // Desktop: vertical line + nodes positioned by index
+  // Mobile: horizontal scroll strip
+  function buildRail() {
+    rail.innerHTML = '';
+
+    // background line
+    const line = document.createElement('div');
+    line.className = 'resist-rail-line';
+    rail.appendChild(line);
+
+    const isMobile = window.matchMedia('(max-width: 1024px)').matches;
+
+    if (!isMobile) {
+      // Era band labels (background slabs on desktop)
+      // Count events per era to size the bands
+      const eraCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      events.forEach(e => { eraCounts[e.era] = (eraCounts[e.era] || 0) + 1; });
+
+      let cum = 0;
+      for (let eraNum = 1; eraNum <= 5; eraNum++) {
+        const count = eraCounts[eraNum];
+        if (!count) continue;
+        const top = (cum / events.length) * 100;
+        const height = (count / events.length) * 100;
+        cum += count;
+
+        const band = document.createElement('div');
+        band.className = 'resist-era-band';
+        band.style.top = top + '%';
+        band.style.height = height + '%';
+        if (eraNum % 2 === 0) band.style.background = 'rgba(255,255,255,0.015)';
+        rail.appendChild(band);
+
+        const lbl = document.createElement('div');
+        lbl.className = 'resist-era-band-label';
+        lbl.textContent = ERAS[eraNum].code;
+        lbl.style.top = (top + 1) + '%';
+        rail.appendChild(lbl);
+      }
+    }
+
+    events.forEach((e, i) => {
+      const node = document.createElement('div');
+      node.className = 'resist-node';
+      node.dataset.idx = i;
+      node.dataset.era = e.era;
+      if (isMobile) {
+        // position handled via flow (inline-block)
+      } else {
+        node.style.top = ((i / (events.length - 1)) * 100) + '%';
+      }
+      node.title = `${e.date} — ${e.event}`;
+      node.addEventListener('click', () => goTo(i));
+      rail.appendChild(node);
+    });
+  }
+
+  // ---------- RENDER CARD ----------
+  function render(i) {
+    if (i < 0 || i >= events.length) return;
+    const e = events[i];
+
+    card.classList.add('swapping');
+
+    setTimeout(() => {
+      idxEl.textContent = String(i + 1).padStart(2, '0');
+      const eraInfo = ERAS[e.era];
+      eraTagEl.textContent = `ERA ${eraInfo.code} · ${eraInfo.name}`;
+      dateEl.textContent = e.date;
+      eventEl.textContent = e.event;
+      typeEl.textContent = '◇ ' + e.type;
+      actorsEl.textContent = e.actors || '—';
+      whyEl.textContent = e.why || '—';
+      impactEl.textContent = e.impact || '—';
+      sourceEl.textContent = e.source || '—';
+
+      // progress
+      const pct = ((i + 1) / events.length) * 100;
+      progEl.style.width = pct + '%';
+
+      // active node
+      document.querySelectorAll('.resist-node').forEach((n, ni) => {
+        n.classList.toggle('active', ni === i);
+      });
+
+      card.classList.remove('swapping');
+    }, 180);
+
+    currentIdx = i;
+  }
+
+  function goTo(i) {
+    if (i < 0) i = events.length - 1;
+    if (i >= events.length) i = 0;
+    render(i);
+  }
+
+  function findNextInFilter(dir) {
+    if (filterEra === 'all') {
+      return (currentIdx + dir + events.length) % events.length;
+    }
+    const eraNum = parseInt(filterEra, 10);
+    let next = currentIdx;
+    for (let step = 0; step < events.length; step++) {
+      next = (next + dir + events.length) % events.length;
+      if (events[next].era === eraNum) return next;
+    }
+    return currentIdx;
+  }
+
+  // ---------- NAVIGATION ----------
+  prevBtn.addEventListener('click', () => goTo(findNextInFilter(-1)));
+  nextBtn.addEventListener('click', () => goTo(findNextInFilter(1)));
+
+  document.addEventListener('keydown', (e) => {
+    // Only respond when section is in view
+    const rect = card.getBoundingClientRect();
+    if (rect.bottom < 0 || rect.top > window.innerHeight) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowLeft')  { goTo(findNextInFilter(-1)); }
+    if (e.key === 'ArrowRight') { goTo(findNextInFilter(1)); }
+  });
+
+  // ---------- ERA FILTER ----------
+  erasContainer.addEventListener('click', (e) => {
+    const btn = e.target.closest('.resist-era-pill');
+    if (!btn) return;
+    erasContainer.querySelectorAll('.resist-era-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterEra = btn.dataset.era;
+    applyFilter();
+  });
+
+  function applyFilter() {
+    const eraNum = filterEra === 'all' ? null : parseInt(filterEra, 10);
+    document.querySelectorAll('.resist-node').forEach((n, i) => {
+      const e = events[i];
+      n.classList.toggle('hidden', eraNum !== null && e.era !== eraNum);
+    });
+    // Jump to first event of the selected era if current is outside
+    if (eraNum !== null && events[currentIdx].era !== eraNum) {
+      const firstIn = events.findIndex(ev => ev.era === eraNum);
+      if (firstIn >= 0) goTo(firstIn);
+    }
+  }
+
+  // ---------- INIT ----------
+  buildRail();
+  render(0);
+
+  // Rebuild rail on resize across breakpoint
+  let wasMobile = window.matchMedia('(max-width: 1024px)').matches;
+  window.addEventListener('resize', () => {
+    const isMobile = window.matchMedia('(max-width: 1024px)').matches;
+    if (isMobile !== wasMobile) {
+      wasMobile = isMobile;
+      buildRail();
+      // restore active state
+      document.querySelectorAll('.resist-node').forEach((n, ni) => {
+        n.classList.toggle('active', ni === currentIdx);
+      });
+      applyFilter();
+    }
+  });
+})();
+
+
+</script>
+</body>
+</html>
